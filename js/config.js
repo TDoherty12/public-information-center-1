@@ -67,7 +67,7 @@ dojo.declare("js.config", null, {
     // BASEMAP SETTINGS
     // ------------------------------------------------------------------------------------------------------------------------
     // Set baseMap layers
-    //Basemap layers:Basemap layer collection. (All the basemap’s need to be in the same spatial reference)
+    //Basemap layers:Basemap layer collection. (All the basemaps need to be in the same spatial reference)
     BaseMapLayers:
        [
           {
@@ -75,7 +75,7 @@ dojo.declare("js.config", null, {
               Key: "streetMap",
               ThumbnailSource: "images/Parcel map.png",
               Name: "Streets",
-              MapURL: "http://localgovtemplates.esri.com/ArcGIS/rest/services/ParcelPublicAccess/MapServer"
+              MapURL: ""
 
           },
           {

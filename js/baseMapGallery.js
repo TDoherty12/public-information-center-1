@@ -111,7 +111,12 @@ function ChangeBaseMap(spanControl) {
 }
 
 function CreateBaseMapLayer(layerURL, layerId, isVisible) {
-    var layer = new esri.layers.ArcGISTiledMapServiceLayer(layerURL, { id: layerId, visible: isVisible });
+    var layer;
+    if(layerURL === "") {
+        layer = new esri.layers.OpenStreetMapLayer({ id: layerId, visible: isVisible });
+    } else {
+        layer = new esri.layers.ArcGISTiledMapServiceLayer(layerURL, { id: layerId, visible: isVisible });
+    }
     return layer;
 }
 
