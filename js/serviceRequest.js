@@ -132,7 +132,7 @@ function FetchAttachmentDetails(objectID) {
         }
         dojo.byId("divAttachmentsData").appendChild(fileTable);
 
-        if (file.length > 0) {
+        if (files.length > 0) {
             CreateScrollbar(dojo.byId("divAttachments"), dojo.byId("divAttachmentsData"));
         }
     });
