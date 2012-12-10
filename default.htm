@@ -268,12 +268,6 @@
 
             glayer = new esri.layers.GraphicsLayer();
             glayer.id = tempServiceRequestLayerId;
-
-            dojo.connect(glayer, "onMouseMove", function (evt) {
-                ShowMapTip(evt, evt.graphic.attributes.Address);
-            });
-            dojo.connect(glayer, "onMouseOut", CloseMapTip);
-
             map.addLayer(glayer);
 
 

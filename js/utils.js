@@ -283,31 +283,16 @@ function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
         }
         else if (activeTabIndex == 1) {
             mapClickHandle = dojo.connect(map, "onClick", function (evt) {
+                // Remove any existing graphics
                 map.getLayer(tempServiceRequestLayerId).clear();
 
-                ShowLoadingMessage('Locating...');
-                var locator = new esri.tasks.Locator(locatorURL);
-                locator.locationToAddress(evt.mapPoint, 100);
-                dojo.connect(locator, "onLocationToAddressComplete", function (candidate) {
-                    if (candidate.address) {
-                        var symbol = new esri.symbol.PictureMarkerSymbol(serviceRequestSymbolURL, 22, 22);
-                        var attr = [];
-                        if (candidate.address.Loc_name == "US_Zipcode") {
-                            attr = { Address: candidate.address.Zip };
-                        }
-                        else {
-                            var address = [];
-                            for (var att in locatorParams) {
-                                address.push(candidate.address[locatorParams[att]]);
-                            }
-                            attr = { Address: address.join(',') };
-                        }
-                        var graphic = new esri.Graphic(evt.mapPoint, symbol, attr, null);
-                        map.getLayer(tempServiceRequestLayerId).add(graphic);
-                        HideLoadingMessage();
-                    }
-                });
+                // Add a graphic to the display at the map click point
+                var symbol = new esri.symbol.PictureMarkerSymbol(serviceRequestSymbolURL, 22, 22);
+                var graphic = new esri.Graphic(evt.mapPoint, symbol, null, null);
+                map.getLayer(tempServiceRequestLayerId).add(graphic);
             });
+
+            // Do other tab setups
             ClearHideSocialMediaLayers();
             ToggleServiceRequestLayer(true);
             ResetRequestValues();
