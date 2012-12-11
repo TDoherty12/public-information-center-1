@@ -164,8 +164,6 @@
             defaultImg = responseObject.LocatorMarkupSymbolPath;
             locatorFields = responseObject.LocatorFields;
 
-            baseMapLayerCollection = responseObject.BaseMapLayers;
-            CreateBaseMapComponent();
             defaultAddress = responseObject.LocatorDefaultAddress;
             dojo.byId('txtAddress').value = responseObject.LocatorDefaultAddress;
             dojo.byId('rbAddress').checked = true;
@@ -173,7 +171,6 @@
 
             geometryService = new esri.tasks.GeometryService(responseObject.GeometryService);
 
-            dojo.connect(map, "onLoad", MapInitFunction);
 
             dojo.byId('spanAlertInstructions').innerHTML = responseObject.Alerts.Instructions;
             dojo.byId('spanServiceRequestInstructions').innerHTML = responseObject.ServiceRequest.Instructions;
@@ -229,6 +226,9 @@
             customMouseHandler.addEvent(dojo.byId('divContainer'), 'mouseleave', HideBaseMapWidget, false);
             customMouseHandler.addEvent(dojo.byId('divAppContent'), 'mouseleave', HideApplicationShareWidget, false);
 
+            dojo.connect(map, "onLoad", MapInitFunction);
+            baseMapLayerCollection = responseObject.BaseMapLayers;
+            CreateBaseMapComponent();
         }
 
         //function for map initialized
