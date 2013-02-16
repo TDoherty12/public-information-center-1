@@ -81,5 +81,5 @@ limitations under the License.
 A copy of the license is available in the repository's
 [license.txt](https://raw.github.com/Esri/public-information-center/master/license.txt) file.
 
-[](Esri Tags: Local Government public information center)
+[](Esri Tags: Local Government Public Information Center)
 [](Esri Language: JavaScript)
