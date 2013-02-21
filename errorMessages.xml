@@ -17,7 +17,7 @@
 -->
 <Messages>
   <spanErrorMsgType>Please select Request type.</spanErrorMsgType>
-  <spanErrorMsgLength>Description should not exceed 255 characters.</spanErrorMsgLength>
+  <spanErrorMsgLength>Description should not exceed 250 characters.</spanErrorMsgLength>
   <spanErrorMsgText>Invalid Name</spanErrorMsgText>
   <exceededName>Name field should not exceed more than 50 characters.</exceededName>
   <exceededMail>E-mail field should not exceed more than 100 characters</exceededMail>
@@ -27,16 +27,19 @@
   <textComment>Please enter Comment.</textComment>
   <textCommentLimit>Comment should not exceed 250 characters.</textCommentLimit>
   <mapLocation>Please select a location on map to create a request.</mapLocation>
-  <mapAddress>Enter address to locate.</mapAddress>
-  <blankService>Enter service request number to locate.</blankService>
+  <addressToLocate>Enter address to locate.</addressToLocate>
+  <serviceToLocate>Enter service request number to locate.</serviceToLocate>
   <addressFormat>Please enter address in [Address, City, State, Zip] or in [Address, Zip] format.</addressFormat>
   <unableLocate>Unable to locate specified address.</unableLocate>
   <unableService>Unable to locate specified service request number.</unableService>
   <tinyURLEngine>Bitly API is not able to generate tiny URL.</tinyURLEngine>
-  <timeOut>The browser is unable to supply a position at this time.</timeOut>
-  <positionUnavailable>Position unavailable.</positionUnavailable>
-  <permissionDenied>Permission denied.</permissionDenied>
-  <unknownError>Unknown error.</unknownError>
-  <dataNotAvailable>You are currently outside the supported area.</dataNotAvailable>
+  <geolocationTimeout>Request timed out.</geolocationTimeout>
+  <geolocationPositionUnavailable>Position unavailable.</geolocationPositionUnavailable>
+  <geolocationPermissionDenied>Permission denied.</geolocationPermissionDenied>
+  <geolocationUnKnownError>Unknown error.</geolocationUnKnownError>
+  <geoLocation>You are currently outside the supported area.</geoLocation>
   <commentUnassigned>Adding comments are only available for Unassigned requests.</commentUnassigned>
+  <invalidSearch>No search results found.</invalidSearch>
+  <noComment>No comment</noComment>
+  <fileType> Service request '${0}' has been created without attachment because the file type is not accepted.</fileType>
 </Messages>
