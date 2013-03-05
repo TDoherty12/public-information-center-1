@@ -188,7 +188,6 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
 
     esri.request({
         url: requestURL,
-        callbackParamName: socialMediaInfo[socialMediaIndex].CallBackParamName,
         load: function (results) {
             var items = socialMediaInfo[socialMediaIndex].FeedAttribute.split(".");
             var data = results;
@@ -239,7 +238,7 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                             var lat = point[1].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
                             var long = point[0].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
                             if (!(isNaN(lat) || isNaN(long)) && lat != "" && long != "") {
-                                var point = new esri.geometry.Point(Number(lat), Number(long), new esri.SpatialReference({ wkid: 4326 }));
+                                var point = new esri.geometry.Point(Number(long), Number(lat), new esri.SpatialReference({ wkid: 4326 }));
                                 graphicCollection.addPoint(point);
                                 graphicAttributes.push({
                                     CONTENT: content,
@@ -321,7 +320,9 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
             }
             dojo.byId("span" + socialMediaInfo[socialMediaIndex].Key).innerHTML = "";
             if (dojo.byId('chk' + socialMediaInfo[socialMediaIndex].Key).checked) {
-                alert("An error occured while fetching " + socialMediaInfo[socialMediaIndex].Key + " feed.");
+                ShowDialog('Error',
+                    messages.getElementsByTagName("feedError")[0].childNodes[0].nodeValue
+                    + "<br>" + error.message);
             }
         }
     });
