@@ -36,6 +36,7 @@
   <timeOut>The browser is unable to supply a position at this time.</timeOut>
   <positionUnavailable>Position unavailable.</positionUnavailable>
   <permissionDenied>Permission denied.</permissionDenied>
+  <feedError>An error occurred while fetching the feed.</feedError>
   <unknownError>Unknown error.</unknownError>
   <dataNotAvailable>You are currently outside the supported area.</dataNotAvailable>
   <commentUnassigned>Adding comments are only available for Unassigned requests.</commentUnassigned>
