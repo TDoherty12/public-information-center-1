@@ -120,10 +120,15 @@ function ShowBaseMaps() {
     var cellHeight = 115;
     if (dojo.coords("divLayerContainer").h > 0) {
         HideBaseMapLayerContainer();
-    } else {
-        dojo.byId('divLayerContainer').style.height = Math.ceil(baseMapLayers.length / 2) * cellHeight + "px";
+    } else {        
+        dojo.byId('divLayerContainer').style.height = cellHeight + "px";
+        dojo.byId('divLayerContentHolder').style.height = (cellHeight - 20) + "px";
+        dojo.byId('divLayerContentHolder').style.top = "0px";
         dojo.replaceClass("divLayerContainer", "showContainerHeight", "hideContainerHeight");
     }
+    setTimeout(function () {
+        CreateScrollbar(dojo.byId("divLayerContainerHolder"), dojo.byId("divLayerContentHolder"));
+    }, 500);
 }
 
 //Hide base map container

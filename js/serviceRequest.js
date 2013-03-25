@@ -345,13 +345,13 @@ function AddRequestComment() {
     }
     var commentGraphic = new esri.Graphic();
     var date = new js.date();
-    var attr = {
-        "REQUESTID": selectedRequestID,
-        "COMMENTS": text,
-        "SUBMITDT": date.utcMsFromTimestamp(date.localToUtc(date.localTimestampNow())),
-        "RANK": Number(dojo.byId('commentRating').value)
-    };
+    var attr = {};
+    attr[databaseFields.RequestIdFieldName] = selectedRequestID;
+    attr[databaseFields.CommentsFieldName] = text;
+    attr[databaseFields.DateFieldName] = date.utcMsFromTimestamp(date.localToUtc(date.localTimestampNow()));
+    attr[databaseFields.RankFieldName] = Number(dojo.byId('commentRating').value);
     commentGraphic.setAttributes(attr);
+
     dojo.byId('btnAddComments').disabled = true;
     map.getLayer(serviceRequestLayerInfo.Key + "Comments").applyEdits([commentGraphic], null, null, function (msg) {
         if (msg[0].error) { } else {
@@ -364,7 +364,7 @@ function AddRequestComment() {
                 var tr = table[0].insertRow(0);
                 var commentsCell = document.createElement("td");
                 commentsCell.className = "bottomborder";
-                commentsCell.title = attr.COMMENTS;
+                commentsCell.title = attr[databaseFields.CommentsFieldName];
                 var index = dojo.query("tr", table[0]).length;
                 if (index) {
                     index = 0;
@@ -372,7 +372,7 @@ function AddRequestComment() {
                 commentsCell.appendChild(CreateCommentRecord(attr, index));
                 tr.appendChild(commentsCell);
                 CreateRatingWidget(dojo.byId('commentRating' + index));
-                SetRating(dojo.byId('commentRating' + index), attr.RANK);
+                SetRating(dojo.byId('commentRating' + index), attr[databaseFields.RankFieldName]);
             }
         }
         dojo.byId('btnAddComments').disabled = false;
@@ -730,26 +730,27 @@ function CreateServiceRequest() {
         ShowProgressIndicator();
         var mapPoint = map.getLayer(tempServiceRequestLayerId).graphics[0].geometry;
         var date = new js.date();
-        var serviceRequestAttributes = {
-            "REQUESTTYPE": dijit.byId("cbRequestType").value,
-            "COMMENTS": dojo.byId('txtDescription').value.trim(),
-            "NAME": dojo.byId('txtName').value.trim(),
-            "PHONE": dojo.byId('txtPhone').value.trim(),
-            "EMAIL": dojo.byId('txtMail').value.trim(),
-            "STATUS": "Unassigned",
-            "REQUESTDATE": date.utcMsFromTimestamp(date.localToUtc(date.localTimestampNow()))
-        };
+
+        var serviceRequestAttributes = {};
+        serviceRequestAttributes[serviceRequestFields.RequestTypeFieldName] = dojo.byId("cbRequestType").value;
+        serviceRequestAttributes[serviceRequestFields.CommentsFieldName] = dojo.byId('txtDescription').value.trim();
+        serviceRequestAttributes[serviceRequestFields.NameFieldName] = dojo.byId('txtName').value.trim();
+        serviceRequestAttributes[serviceRequestFields.PhoneFieldName] = dojo.byId('txtPhone').value;
+        serviceRequestAttributes[serviceRequestFields.EmailFieldName] = dojo.byId('txtMail').value.trim();
+        serviceRequestAttributes[serviceRequestFields.StatusFieldName] = "Unassigned";
+        serviceRequestAttributes[serviceRequestFields.RequestDateFieldName] = date.utcMsFromTimestamp(date.localToUtc(date.localTimestampNow()));
+
         var serviceRequestGraphic = new esri.Graphic(mapPoint, null, serviceRequestAttributes, null);
         map.getLayer(serviceRequestLayerInfo.Key).applyEdits([serviceRequestGraphic], null, null, function (addResults) {
             if (addResults[0].success) {
                 var objectIdField = map.getLayer(serviceRequestLayerInfo.Key).objectIdField;
-                var requestID = {
-                    "REQUESTID": String(addResults[0].objectId)
-                };
+                var requestID = {};
+                requestID[serviceRequestFields.RequestIdFieldName] = String(addResults[0].objectId);
                 requestID[objectIdField] = addResults[0].objectId;
+
                 var requestGraphic = new esri.Graphic(mapPoint, null, requestID, null);
                 map.getLayer(serviceRequestLayerInfo.Key).applyEdits(null, [requestGraphic], null, function () {
-                    serviceRequestGraphic.attributes["REQUESTID"] = String(addResults[0].objectId);
+                    serviceRequestGraphic.attributes[serviceRequestFields.RequestIdFieldName] = String(addResults[0].objectId);
                     AddAttachments(addResults[0].objectId, mapPoint, serviceRequestGraphic.attributes);
                 }, function (err) {
                     ResetRequestValues();
@@ -791,7 +792,7 @@ function AddAttachments(objectID, mapPoint, requestId) {
                     ResetRequestValues();
                     ShowServiceRequestDetails(mapPoint, requestId);
                     HideProgressIndicator();
-                    alert("Service request has been created without attachment because the file type is not accepted");
+                    alert(dojo.string.substitute(messages.getElementsByTagName("fileType")[0].childNodes[0].nodeValue, [objectID]));
                 }
             });
         } else {

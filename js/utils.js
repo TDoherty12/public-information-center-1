@@ -232,7 +232,6 @@ function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
     featureID = null;
     objectId = null;
     alertLayerID = null;
-    passedId = null;
     var i, tabContainer, tabContents;
     shareSelectedTab = activeTabIndex;
     tabContainer = document.getElementById(containerId);
@@ -243,33 +242,29 @@ function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
     }
     dojo.disconnect(mapClickHandle);
     if (tabContents.length > 0) {
-
-
-
-
-
-
         if (activeTabIndex == 1) {
-            if (dojo.byId("tab" + 1).style.color == "none") {
-                tabContents[1].style.display = "none";
-            }
-            else {
-
-                for (i = 0; i < tabContents.length; i++) {
-                    tabContents[i].style.display = "none";
+            if (dojo.byId("tab" + 1).style.display != "none") {
+                if (dojo.byId("tab" + 1).style.color == "none") {
+                    tabContents[1].style.display = "none";
                 }
-                tabContents[activeTabIndex].style.display = "block";
+                else {
 
-                tabList = document.getElementById(containerId + '-list');
-                tabs = dojo.query(".tab-item", tabContainer);
-                if (tabs.length > 0) {
-                    for (i = 0; i < tabs.length; i++) {
-                        tabs[i].className = "tab-item";
+                    for (i = 0; i < tabContents.length; i++) {
+                        tabContents[i].style.display = "none";
                     }
-                    tabs[activeTabIndex].className = "tab-item tab-active";
-                    tabs[activeTabIndex].blur();
-                }
+                    tabContents[activeTabIndex].style.display = "block";
 
+                    tabList = document.getElementById(containerId + '-list');
+                    tabs = dojo.query(".tab-item", tabContainer);
+                    if (tabs.length > 0) {
+                        for (i = 0; i < tabs.length; i++) {
+                            tabs[i].className = "tab-item";
+                        }
+                        tabs[activeTabIndex].className = "tab-item tab-active";
+                        tabs[activeTabIndex].blur();
+                    }
+
+                }
             }
         }
         else {
@@ -290,8 +285,6 @@ function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
         }
 
     }
-
-
 
     if (isMapInitialized) {
         map.infoWindow.hide();
@@ -338,7 +331,6 @@ function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
                 }
                 var graphic = new esri.Graphic(evt.mapPoint, symbol, null, null);
                 map.getLayer(tempServiceRequestLayerId).add(graphic);
-                //                map.setExtent(GetBrowserMapExtent(evt.mapPoint));
             });
             // Do other tab setups
             ClearHideSocialMediaLayers();
@@ -521,9 +513,7 @@ function CreateScrollbar(container, content) {
         if (window.addEventListener) {
             content.addEventListener('DOMMouseScroll', ScrollDiv, false);
         }
-
         content.onmousewheel = function (evt) {
-            console.log(content.id);
             ScrollDiv(evt);
         }
     }
@@ -588,7 +578,6 @@ function CreateScrollbar(container, content) {
             return false;
         }
         document.onmousemove = function (evt) {
-            console.log("inside mousemove");
             evt = (evt) ? evt : event;
             evt.cancelBubble = true;
             if (evt.stopPropagation) evt.stopPropagation();
@@ -786,9 +775,16 @@ function ResetSearchContainer() {
 //Set height for address results and create scrollbar 
 function SetAddressResultsHeight() {
     var height = dojo.coords(dojo.byId('divAddressContent')).h;
-    if (height > 0) {
-        dojo.byId('divAddressScrollContent').style.height = (height - 165) + "px";
+    var containerHeight;
+    if (dojo.byId("tdSearchAddress").style.display != "none") {
+        containerHeight = 165;
+    }
+    else {
+        containerHeight = 150;
+    }
 
+    if (height > 0) {
+        dojo.byId('divAddressScrollContent').style.height = (height - containerHeight) + "px";
     }
     CreateScrollbar(dojo.byId("divAddressScrollContainer"), dojo.byId("divAddressScrollContent"));
 }

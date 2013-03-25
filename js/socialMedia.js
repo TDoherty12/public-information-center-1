@@ -207,11 +207,11 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
 
     esri.request({
         url: requestURL,
-        callbackParamName: socialMediaInfo[socialMediaIndex].CallBackParamName,
+        handleAs: "json",
+        callbackParamName: (socialMediaInfo[socialMediaIndex].CallBackParamName) ? socialMediaInfo[socialMediaIndex].CallBackParamName : "",
         load: function (results) {
             var items = socialMediaInfo[socialMediaIndex].FeedAttribute.split(".");
             var data = results;
-
             var graphicAttributes = [];
             var graphicCollection = new esri.geometry.Multipoint(new esri.SpatialReference({
                 wkid: 4326
@@ -235,7 +235,8 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
 
                     if (socialMediaInfo[socialMediaIndex].hasCustomFeedSource) {
                         content = dojo.string.substitute(socialMediaInfo[socialMediaIndex].FeedSource, data[i]);
-                    } else {
+                    }
+                    else {
                         attr = socialMediaInfo[socialMediaIndex].FeedSource.split(".");
                         for (var x = 0; x < attr.length; x++) {
                             content = content[attr[x]];
@@ -252,29 +253,37 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                         if (socialMediaInfo[socialMediaIndex].Key == "yt") {
                             id = data[i].id.$t.split("video:")[1];
                         }
-                        else if (socialMediaInfo[socialMediaIndex].Key == "tw") {
+                        else {
                             id = id[attr[x]];
                         }
-                        else{
-                        id = id[attr[x]];
-                        }
-
                     }
 
                     if (socialMediaInfo[socialMediaIndex].FeedLocationSplit) {
                         var attr = socialMediaInfo[socialMediaIndex].FeedLocation.split(".");
                         for (var x = 0; x < attr.length; x++) {
-                            point = point[attr[x]];
+                            if (point[attr[x]]) {
+                                point = point[attr[x]];
+                            }
                         }
                         if (!point) {
                             continue;
                         }
-                        point = point.split(socialMediaInfo[socialMediaIndex].FeedLocationSplit);
-                        if (point.length == 2) {
-                            var lat = point[1].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
-                            var long = point[0].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
+                        else {
+                            if (socialMediaInfo[socialMediaIndex].Key == "tw") {
+                                if (point.length == 2) {
+                                    var lat = point[0];
+                                    var long = point[1];
+                                }
+                            }
+                            else {
+                                point = point.split(socialMediaInfo[socialMediaIndex].FeedLocationSplit);
+                                if (point.length == 2) {
+                                    var lat = point[0].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
+                                    var long = point[1].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
+                                }
+                            }
                             if (!(isNaN(lat) || isNaN(long)) && lat != "" && long != "") {
-                                point = new esri.geometry.Point(Number(lat), Number(long), new esri.SpatialReference({
+                                point = new esri.geometry.Point(Number(long), Number(lat), new esri.SpatialReference({
                                     wkid: 4326
                                 }));
                                 graphicCollection.addPoint(point);
@@ -333,18 +342,18 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                                 dojo.byId('divInfoContent').style.display = "none";
                                 dojo.byId('divSocialInfoContent').style.display = "none";
                                 var tdSocialTitle = dojo.byId('tdSocialTitle');
-                                for (var gra = 0; gra < map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics.length; gra++) {
-                                    if (map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[gra].attributes.ID == passedId) {
-                                        tdSocialTitle.innerHTML = dojo.string.substitute(socialMediaTitle, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[gra].attributes);
+                                for (var j = 0; j < map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics.length; j++) {
+                                    if (map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes.ID == passedId) {
+                                        tdSocialTitle.innerHTML = dojo.string.substitute(socialMediaTitle, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes);
                                         var infoWindowSize = socialMediaInfo[layerIndex].InfoWindowSize.split(",");
                                         map.infoWindow.resize(Number(infoWindowSize[0]), Number(infoWindowSize[1]));
                                         if (socialMediaInfo[layerIndex].CheckHyperLinks) {
-                                            dojo.byId('divSocialInfoDetails').innerHTML = replaceURLWithLinks(dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[gra].attributes));
+                                            dojo.byId('divSocialInfoDetails').innerHTML = replaceURLWithLinks(dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes));
                                         } else {
-                                            dojo.byId('divSocialInfoDetails').innerHTML = dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[gra].attributes);
+                                            dojo.byId('divSocialInfoDetails').innerHTML = dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes);
                                         }
                                         socialLayerID = layerIndex;
-                                        feedID = map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[gra].attributes.ID;
+                                        feedID = map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes.ID;
                                         break;
                                     }
                                 }
@@ -353,8 +362,6 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                                 screenPoint.y = map.height - screenPoint.y;
                                 map.infoWindow.show(screenPoint);
                                 dojo.byId('divSocialInfoContent').style.display = "block";
-
-                                map.infoWindow.show(screenPoint);
                             }
                             multiPoint.addPoint(projectedPoints[0].getPoint(i));
                         }
@@ -393,8 +400,7 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
             }
             dojo.byId("span" + socialMediaInfo[socialMediaIndex].Key).innerHTML = "";
             if (dojo.byId('chk' + socialMediaInfo[socialMediaIndex].Key).checked) {
-                alert(error.message);
-//                                alert("An error occurred while fetching " + socialMediaInfo[socialMediaIndex].DisplayText + " feed.");
+                alert("An error occurred while fetching " + socialMediaInfo[socialMediaIndex].DisplayText + " feed.");
             }
         }
     });

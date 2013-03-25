@@ -20,7 +20,7 @@
   <spanErrorMsgLength>Description should not exceed 250 characters.</spanErrorMsgLength>
   <spanErrorMsgText>Invalid Name</spanErrorMsgText>
   <exceededName>Name field should not exceed more than 50 characters.</exceededName>
-  <exceededMail>E-mail field should not exceed more than 100 characters</exceededMail>
+  <exceededMail>E-mail field should not exceed more than 100 characters.</exceededMail>
   <spanErrorMsgPhoneEmail>Email or Phone number is required.</spanErrorMsgPhoneEmail>
   <spanErrorMsgValidEmail>Please enter valid EmailID.</spanErrorMsgValidEmail>
   <spanErrorMsgValidPhone>Please enter 10-digit phone number in "9999999999" format.</spanErrorMsgValidPhone>
@@ -41,5 +41,6 @@
   <commentUnassigned>Adding comments are only available for Unassigned requests.</commentUnassigned>
   <invalidSearch>No search results found.</invalidSearch>
   <noComment>No comment</noComment>
-  <fileType> Service request '${0}' has been created without attachment because the file type is not accepted.</fileType>
+  <fileType>Service request '${0}' has been created without attachment because the file type is not accepted.</fileType>
+  <tabError>A hidden tab cannot be selected on load, so please set different values for defaultServiceTab(Tab selected on load) and visibleTab(flags set to show/ hide tabs).</tabError>  
 </Messages>

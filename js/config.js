@@ -64,7 +64,8 @@ dojo.declare("js.config", null, {
         Name: "Streets",
         MapURL: "http://localgovtemplates.esri.com/ArcGIS/rest/services/ParcelPublicAccess/MapServer"
 
-    }, {
+    },
+     {
         Key: "imageryMap",
         ThumbnailSource: "images/Imagery Hybrid.png",
         Name: "Imagery",
@@ -84,17 +85,24 @@ dojo.declare("js.config", null, {
     // Set string value to be shown for null or blank values
     ShowNullValueAs: "N/A",
 
-    //Note: Please set different values for defaultServiceTab & tabHeaders as tab selected on load & tab to be removed cannot be same
+    //Note: Please set different values for defaultServiceTab & visibleTab as tab selected on load & tab to be removed cannot be same    
+    // DefaultServiceTab can only be 0, 1 or 2
     //0 = Information, 1=RequestService, 2=SocialMedia
     //Set the value for the tab enabled on load
-    DefaultServiceTab: 0,
+    DefaultServiceTab:0,
 
     //Set the value for the tab to be removed on load as false
-    TabHeaders: {
+    VisibleTab: {
         Information: true,
         RequestService: true,
         SocialMedia: true
     },
+
+    // Set the title to be displayed on the tab header
+    TabHeaderText: [
+        "Information",
+        "Request Service",
+        "Social Media"],
 
     //Set the attribute for displaying status of serviceRequest
     Status: "${STATUS}",
@@ -114,11 +122,27 @@ dojo.declare("js.config", null, {
     // Sets the object id for querying while sharing the infowindow for the alerts tab
     ShareQuery: "OBJECTID = '${0}'",
 
-    // Set the title to be displayed on the tab header
-    TabHeaderText: [
-        "Information",
-        "Request Service",
-        "Social Media"],
+    // Define the database field names 
+    // Note: DateFieldName refers to a date database field. 
+    // All other attributes refer to text database fields.
+    DatabaseFields: {
+        RequestIdFieldName: "REQUESTID",
+        CommentsFieldName: "COMMENTS",
+        DateFieldName: "SUBMITDT",
+        RankFieldName: "RANK"
+    },
+
+    //Define service request input fields for submitting a new request
+    ServiceRequestFields: {
+        RequestIdFieldName: "REQUESTID",
+        RequestTypeFieldName: "REQUESTTYPE",
+        CommentsFieldName: "COMMENTS",
+        NameFieldName: "NAME",
+        PhoneFieldName: "PHONE",
+        EmailFieldName: "EMAIL",
+        StatusFieldName: "STATUS",
+        RequestDateFieldName: "REQUESTDATE"
+    },
 
     // Set info-pop fields for adding and displaying comment
     CommentsInfoPopupFieldsCollection: {
@@ -328,20 +352,19 @@ dojo.declare("js.config", null, {
             mediaDetail: 'Geotaggedtweetsfilteredby"${0}"fromTwitter',
             searchTag: "Naperville",
             requireGeometry: true,
-            FeedURL: "http://search.twitter.com/search.json?q=${SEARCHTAG}&since date=${TIME}&geocode=${POINTY}%2c${POINTX}%2c30mi&rpp=100&result_type=mixed",
+            FeedURL: "https://api.twitter.com/1.1/search/tweets.json?q=${SEARCHTAG}&geocode=${POINTY}%2C${POINTX}%2C30mi&until=${TIME}&count=100&result_type=mixed",                                                                   
             UseUTCDate: true,
             MonthRangeDays: 4,
             DateFormat: "yyyy-MM-dd",
-            CallBackParamName: "callback",
-            FeedAttribute: "results",
+            FeedAttribute: "statuses",
             FeedSource: "text",
-            FeedTitle: "from_user",
+            FeedTitle: "user.name",
             FeedID: "id",
-            FeedLocation: "location",
+            FeedLocation: "geo.coordinates",
             FeedLocationSplit: ",",
             CheckHyperLinks: true,
             InfoWindowSize: "330,310",
-            InfoWindowTemplate: '${TITLE}says: <br/>${CONTENT}'
+            InfoWindowTemplate: '${TITLE}&nbsp;says: <br/>${CONTENT}'
         }, {
             Key: "fl",
             DisplayText: "Flickr",
@@ -396,18 +419,17 @@ dojo.declare("js.config", null, {
             DisplayField: "${REQUESTID}"
         }]
     },
-       
+
 
     // ------------------------------------------------------------------------------------------------------------------------
     // SETTINGS FOR MAP SHARING
     // ------------------------------------------------------------------------------------------------------------------------
     // Set URL for TinyURL service, and URLs for social media
     MapSharingOptions: {
-        TinyURLServiceURL: "http://api.bit.ly/v3/shorten?login=esri&apiKey=f53ad40a4f3baac4331e18da680c071c&uri=${0}&format=json",
-        TinyURLResponseAttribute: "data.url",
+        TinyURLServiceURL: "http://api.bit.ly/v3/shorten?login=esri&apiKey=R_65fd9891cd882e2a96b99d4bda1be00e&uri=${0}&format=json",
+        TinyURLResponseAttribute: "data.url", 
         FacebookShareURL: "http://www.facebook.com/sharer.php?u=${0}&t=Public%20Information%20Center",
         TwitterShareURL: "http://twitter.com/home/?status=Public%20Information%20Center' ${0}",
         ShareByMailLink: "mailto:%20?subject=Public%20Information%20Center&body=${0}"
     }
 });
-

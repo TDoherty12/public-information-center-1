@@ -215,7 +215,10 @@ function LocateServiceRequestOnMap(attributes) {
     ShowProgressIndicator();
     map.infoWindow.hide();
     map.getLayer(tempGraphicsLayerId).clear();
-    ActivateTab('divServiceTabContainer', 1, true);
+  
+        ActivateTab('divServiceTabContainer', 1, true);
+    
+
     setTimeout(function () {
         ShowServiceRequestDetails(selectedRequest, attributes);
     }, 500);

@@ -24,7 +24,7 @@
 /* 5. Set the styles for application header    - { Style(s) to look for: tableHeader,imgApp,imgOptions,imgShare,tdHeader,divLogo,divApplicationHeader,lblAppName }*/
 /* 6. Set the styles for search container      - { Style(s) to look for: divAddressScrollContainer,divAddressScrollContent,tblHeader,divAddressPlaceHolder,txtAddress,
                                                                          divAddressList,bottomborder,tdSearchByAddress,tdSearchByServiceId,tdSearchByUnSelectedServiceId,
-                                                                         tdSearchByUnSelectedAddress,imgLocate,divAddressContent,imgSearchLoader }*/
+                                                                         tdSearchByUnSelectedAddress,imgLocate,imgLocate1,divAddressContent,imgSearchLoader }*/
 /* 7. Set the Styles for Basemap Container     - { Style(s) to look for: basemapThumbnail,baseMapContainerNode,basemapLabel,selectedBaseMap,divLayerContentHolder,divLayerContainer,divLayerHolder }*/
 /* 8. Set the styles for info window           - { Style(s) to look for: divInfoWindowContainer,dj_ie .divInfoWindowContainer,divInfoWindowContainer .container,divInfoWindowContainer .content,
                                                                          divInfoWindowContainer .title,title,divTriangle,spanContentText,divInfoContainer,divInfoContent,content,tblTransparent,tblInfoWindow,
@@ -433,6 +433,17 @@ body, html
     right: 25px;
     cursor: pointer;
     position: absolute;
+}
+.imgLocate1
+{
+    height: 30px !important;
+    width: 30px !important;
+    vertical-align: middle;
+    top: 58px;
+    right: 15px;
+    cursor: pointer;
+    position: absolute;
+     z-index: 101;
 }
 
 .divAddressContent

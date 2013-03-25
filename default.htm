@@ -139,7 +139,7 @@
                             <table cellpadding="0" cellspacing="0" style="color: #fff; width: 100%;">
                                 <tr>
                                     <td>
-                                        <table style="width: 100%; margin: 5px 5px 8px -2px;">
+                                        <table style="width: 100%; margin: 5px 5px 8px -2px;" id="table">
                                             <tr>
                                                 <td id="tdSearchAddress" class="tdSearchByAddress" onclick="SearchByAddress();">
                                                 </td>
@@ -184,8 +184,11 @@
     </div>
     <div id="divLayerContainer" class="divLayerContainer hideContainerHeight">
         <div id="divLayerHolder" class="divLayerHolder">
-            <div id="divLayerContentHolder" class="divLayerContentHolder">
-                <div id="layerList">
+            <div id="divLayerContainerHolder" style="position: relative">
+                <div id="divLayerContentHolder" class="divLayerContentHolder" style="position: absolute;
+                    overflow: hidden">
+                    <div id="layerList">
+                    </div>
                 </div>
             </div>
         </div>
