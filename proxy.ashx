@@ -1,6 +1,6 @@
 <%@ WebHandler Language="C#" Class="proxy" %>
 /*
- | Version 10.1.1
+ | Version 10.2
  | Copyright 2012 Esri
  |
  | Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,110 +36,216 @@ using System.Web.Caching;
 /// </summary>
 public class proxy : IHttpHandler {
 
+
     public void ProcessRequest (HttpContext context) {
 
         HttpResponse response = context.Response;
 
         // Get the URL requested by the client (take the entire querystring at once
         //  to handle the case of the URL itself containing querystring parameters)
-        string uri = context.Request.Url.Query.Substring(1);
+      string  uri = context.Request.Url.Query.Substring(1);
 
         // Get token, if applicable, and append to the request
-        string token = getTokenFromConfigFile(uri);
-        if (!String.IsNullOrEmpty(token))
+        if (uri.Contains("https://api.twitter.com/1.1/search/tweets.json"))
         {
-            if (uri.Contains("?"))
-                uri += "&token=" + token;
-            else
-                uri += "?token=" + token;
+            char[] delimiters = new char[] { '?'};
+            string parameterString = uri.Split(delimiters)[1];
+            string[] arr = parameterString.Split(new char[] { '&' });
+
+            string url = uri.Split(delimiters)[0];
+            getTwitterData(url, response, arr, uri);
         }
-
-        System.Net.HttpWebRequest req = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(uri);
-
-        //code added to use default credentails for authenticating the request via proxy
-        req.UseDefaultCredentials = true;
-        req.Credentials = System.Net.CredentialCache.DefaultCredentials;
-
-        req.Method = context.Request.HttpMethod;
-        req.ServicePoint.Expect100Continue = false;
-
-        // Set body of request for POST requests
-        if (context.Request.InputStream.Length > 0)
+        else
         {
-            byte[] bytes = new byte[context.Request.InputStream.Length];
-            context.Request.InputStream.Read(bytes, 0, (int)context.Request.InputStream.Length);
-            req.ContentLength = bytes.Length;
-
-            string ctype = context.Request.ContentType;
-            if (String.IsNullOrEmpty(ctype)) {
-              req.ContentType = "application/x-www-form-urlencoded";
-            }
-            else {
-              req.ContentType = ctype;
-            }
-
-            using (Stream outputStream = req.GetRequestStream())
+            string token = getTokenFromConfigFile(uri);
+            if (!String.IsNullOrEmpty(token))
             {
-                outputStream.Write(bytes, 0, bytes.Length);
+                if (uri.Contains("?"))
+                    uri += "&token=" + token;
+                else
+                    uri += "?token=" + token;
             }
-        }
 
-        // Send the request to the server
-        System.Net.WebResponse serverResponse = null;
-        try
-        {
-            serverResponse = req.GetResponse();
-        }
-        catch (System.Net.WebException webExc)
-        {
-            response.StatusCode = 500;
-            response.StatusDescription = webExc.Status.ToString();
-            response.Write(webExc.Response);
-            response.End();
-            return;
-        }
+            System.Net.HttpWebRequest req = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(uri);
 
-        // Set up the response to the client
-        if (serverResponse != null) {
-            response.ContentType = serverResponse.ContentType;
-            using (Stream byteStream = serverResponse.GetResponseStream())
+            //code added to use default credentials for authenticating the request via proxy
+            req.UseDefaultCredentials = true;
+            req.Credentials = System.Net.CredentialCache.DefaultCredentials;
+
+            req.Method = context.Request.HttpMethod;
+            req.ServicePoint.Expect100Continue = false;
+
+            // Set body of request for POST requests
+            if (context.Request.InputStream.Length > 0)
             {
+                byte[] bytes = new byte[context.Request.InputStream.Length];
+                context.Request.InputStream.Read(bytes, 0, (int)context.Request.InputStream.Length);
+                req.ContentLength = bytes.Length;
 
-                // Text response
-                if (serverResponse.ContentType.Contains("text") ||
-                    serverResponse.ContentType.Contains("json"))
+                string ctype = context.Request.ContentType;
+                if (String.IsNullOrEmpty(ctype))
                 {
-                    using (StreamReader sr = new StreamReader(byteStream))
-                    {
-                        string strResponse = sr.ReadToEnd();
-                        response.Write(strResponse);
-                    }
+                    req.ContentType = "application/x-www-form-urlencoded";
                 }
                 else
                 {
-                    // Binary response (image, lyr file, other binary file)
-                    BinaryReader br = new BinaryReader(byteStream);
-                    byte[] outb = br.ReadBytes((int)serverResponse.ContentLength);
-                    br.Close();
-
-                    // Tell client not to cache the image since it's dynamic
-                    response.CacheControl = "no-cache";
-
-                    // Send the image to the client
-                    // (Note: if large images/files sent, could modify this to send in chunks)
-                    response.OutputStream.Write(outb, 0, outb.Length);
+                    req.ContentType = ctype;
                 }
 
-                serverResponse.Close();
+                using (Stream outputStream = req.GetRequestStream())
+                {
+                    outputStream.Write(bytes, 0, bytes.Length);
+                }
             }
+
+            // Send the request to the server
+            System.Net.WebResponse serverResponse = null;
+            try
+            {
+                serverResponse = req.GetResponse();
+            }
+            catch (System.Net.WebException webExc)
+            {
+                response.StatusCode = 500;
+                response.StatusDescription = webExc.Status.ToString();
+                response.Write(webExc.Response);
+                response.End();
+                return;
+            }
+
+            // Set up the response to the client
+            if (serverResponse != null)
+            {
+                response.ContentType = serverResponse.ContentType;
+                using (Stream byteStream = serverResponse.GetResponseStream())
+                {
+
+                    // Text response
+                    if (serverResponse.ContentType.Contains("text") ||
+                        serverResponse.ContentType.Contains("json"))
+                    {
+                        using (StreamReader sr = new StreamReader(byteStream))
+                        {
+                            string strResponse = sr.ReadToEnd();
+                            response.Write(strResponse);
+                        }
+                    }
+                    else
+                    {
+                        // Binary response (image, lyr file, other binary file)
+                        BinaryReader br = new BinaryReader(byteStream);
+                        byte[] outb = br.ReadBytes((int)serverResponse.ContentLength);
+                        br.Close();
+
+                        // Tell client not to cache the image since it's dynamic
+                        response.CacheControl = "no-cache";
+
+                        // Send the image to the client
+                        // (Note: if large images/files sent, could modify this to send in chunks)
+                        response.OutputStream.Write(outb, 0, outb.Length);
+                    }
+
+                    serverResponse.Close();
+                }
+            }
+
+            response.End();
         }
-        response.End();
     }
 
     public bool IsReusable {
         get {
             return false;
         }
+    }
+    static void getTwitterData(string URL, HttpResponse response, string[] arr, string queryURL)
+    {
+        var oauth_token = "986048725-MtrzgCk1Usd6DsasYELV5CMcZFWuJb7vLdcNFkJo"; //"insert here...";
+        var oauth_token_secret = "87ThaFXJDVqhyfjBHfFs5qM4BroOKKv4h3mGfNf8"; //"insert here...";
+        var oauth_consumer_key = "17pVbOgTTPCTpPMTt8ptiw";// = "insert here...";
+        var oauth_consumer_secret = "AgpnDNZ2giURm7A9J9xQSS57Vnhkarpm6d9txwLs";// = "insert here...";
+        // oauth implementation details
+        var oauth_version = "1.0";
+        var oauth_signature_method = "HMAC-SHA1";
+
+        // unique request details
+        var oauth_nonce = Convert.ToBase64String(
+            new ASCIIEncoding().GetBytes(DateTime.Now.Ticks.ToString()));
+        var timeSpan = DateTime.UtcNow
+            - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        var oauth_timestamp = Convert.ToInt64(timeSpan.TotalSeconds).ToString();
+        var baseFormat = "oauth_consumer_key={0}&oauth_nonce={1}&oauth_signature_method={2}" +
+                       "&oauth_timestamp={3}&oauth_token={4}&oauth_version={5}";
+
+        var oauthString = string.Format(baseFormat,
+                                    oauth_consumer_key,
+                                    oauth_nonce,
+                                    oauth_signature_method,
+                                    oauth_timestamp,
+                                    oauth_token,
+                                    oauth_version
+                                    );
+        string[] oauthParamArray= oauthString.Split(new char[] { '&' });
+
+        string[] paramsArray = new string[arr.Length + oauthParamArray.Length];
+        oauthParamArray.CopyTo(paramsArray, 0);
+
+        arr.CopyTo(paramsArray, oauthParamArray.Length);
+        List<string> paramlist = new List<string>(paramsArray);
+        paramlist.Sort();
+
+        string baseString = "";
+
+        for (var i = 0; i < paramlist.Count; i++)
+        {
+            if (i == 0)
+            {
+                baseString = paramlist[i];
+            }
+            else
+            {
+                baseString = baseString + "&" + paramlist[i];
+            }
+        }
+        baseString = string.Concat("GET&", Uri.EscapeDataString(URL), "&", Uri.EscapeDataString(baseString));
+
+        var compositeKey = string.Concat(Uri.EscapeDataString(oauth_consumer_secret),
+                                "&", Uri.EscapeDataString(oauth_token_secret));
+
+        string oauth_signature;
+        using (System.Security.Cryptography.HMACSHA1 hasher = new System.Security.Cryptography.HMACSHA1(ASCIIEncoding.ASCII.GetBytes(compositeKey)))
+        {
+            oauth_signature = Convert.ToBase64String(
+                hasher.ComputeHash(ASCIIEncoding.ASCII.GetBytes(baseString)));
+        }
+
+        // create the request header
+        var headerFormat = "OAuth oauth_nonce=\"{0}\", oauth_signature_method=\"{1}\", " +
+                           "oauth_timestamp=\"{2}\", oauth_consumer_key=\"{3}\", " +
+                           "oauth_token=\"{4}\", oauth_signature=\"{5}\", " +
+                           "oauth_version=\"{6}\"";
+
+        var authHeader = string.Format(headerFormat,
+                                Uri.EscapeDataString(oauth_nonce),
+                                Uri.EscapeDataString(oauth_signature_method),
+                                Uri.EscapeDataString(oauth_timestamp),
+                                Uri.EscapeDataString(oauth_consumer_key),
+                                Uri.EscapeDataString(oauth_token),
+                                Uri.EscapeDataString(oauth_signature),
+                                Uri.EscapeDataString(oauth_version)
+                        );
+        System.Net.ServicePointManager.Expect100Continue = false;
+        System.Net.HttpWebRequest request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(queryURL);
+        request.Headers.Add("Authorization", authHeader);
+        request.Method = "GET";
+        request.ContentType = "application/x-www-form-urlencoded";
+
+        System.Net.WebResponse serverResponse = request.GetResponse();
+        var reader = new StreamReader(serverResponse.GetResponseStream());
+        var objText = reader.ReadToEnd();
+        response.Write(objText);
+        serverResponse.Close();
+        response.End();
     }
 
     // Gets the token for a server URL from a configuration file

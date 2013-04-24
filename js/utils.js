@@ -1,5 +1,5 @@
 ﻿/** @license
- | Version 10.1.1
+ | Version 10.2
  | Copyright 2012 Esri
  |
  | Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,55 +14,18 @@
  | See the License for the specific language governing permissions and
  | limitations under the License.
  */
-//Function to switch to youtube,twitter,email
-function ToggleApplication() {
+var tinyResponse; //variable for storing the response getting from tiny URL api
+var tinyUrl; //variable for storing the tiny URL
+var shareSelectedTab;
 
-    var bmapNode = dojo.byId('divBaseMapTitleContainer');
-    dijit.byId('imgGPSButton').attr("checked", false);
-    dojo.byId('imgGPS').src = "images/gps.png";
-    if (dojo.coords(bmapNode).h > 0) {
-        WipeOutControl(bmapNode, 500);
-        dijit.byId('imgBaseMap').attr("checked", false);
-    }
-
-    if (dojo.coords(dojo.byId('divAddressContainer')).h > 0) {
-        WipeOutControl(dojo.byId('divAddressContainer'), 500);
-    }
-    var node = dojo.byId('divAppContainer');
-
-    if (node.style.display == 'none') {
-        WipeInControl(node, 500);
-    }
-    else {
-        WipeOutControl(node, 500);
+//Remove scroll bar
+function RemoveScrollBar(container) {
+    if (dojo.byId(container.id + 'scrollbar_track')) {
+        container.removeChild(dojo.byId(container.id + 'scrollbar_track'));
     }
 }
 
-//Function to show help file
-function ShowHelp() {
-    dijit.byId('imgGPSButton').attr("checked", false);
-    dojo.byId('imgGPS').src = "images/gps.png";
-    window.open(helpFileURL, "helpwindow");
-    dijit.byId('imgHelp').attr("checked", false);
-}
-
-//Dojo function to animate address container
-function WipeInControl(node, duration) {
-    dojo.fx.wipeIn({
-        node: node,
-        duration: duration
-    }).play();
-}
-
-//Dojo function to animate address container
-function WipeOutControl(node, duration) {
-    dojo.fx.wipeOut({
-        node: node,
-        duration: duration
-    }).play();
-}
-
-//Function triggered for creating image
+//For creating image
 function CreateImage(imageSrc, title, isCursorPointer, imageWidth, imageHeight) {
     var imgLocate = document.createElement("img");
     imgLocate.style.width = imageWidth + 'px';
@@ -75,7 +38,7 @@ function CreateImage(imageSrc, title, isCursorPointer, imageWidth, imageHeight) 
     return imgLocate;
 }
 
-//function to create rating control
+//Create rating control
 function CreateRatingControl(readonly, ctlId, intitalValue, numStars) {
     var ratingCtl = document.createElement("ul");
     ratingCtl.setAttribute("readonly", readonly);
@@ -87,105 +50,149 @@ function CreateRatingControl(readonly, ctlId, intitalValue, numStars) {
     return ratingCtl;
 }
 
-//Function triggered for animating address container
-function AnimateAdvanceSearch() {
-    var node = dojo.byId('divAddressContainer');
-    if (node.style.display == "none") {
-        WipeInControl(node, 0, 500);
-    }
-}
-
-//Function for refreshing address container div
+//Refreshing address container div
 function RemoveChildren(parentNode) {
     while (parentNode.hasChildNodes()) {
         parentNode.removeChild(parentNode.lastChild);
     }
 }
 
-//Function for Clearing graphics on map
+//Clearing graphics on map
 function ClearGraphics() {
-    if (map.getLayer(tempPointLayer)) {
-        map.getLayer(tempPointLayer).clear();
+    if (map.getLayer(tempGraphicsLayerId)) {
+        map.getLayer(tempGraphicsLayerId).clear();
     }
     if (map.getLayer(tempServiceRequestLayerId)) {
         map.getLayer(tempServiceRequestLayerId).clear();
     }
 }
 
-//Function to open login page for flickr,tweet,email
-function ShareLink(site) {
-    var url = window.location.href;
-    var mapExtent = map.extent;
-    url += "?extent=" + mapExtent.xmin + "," + mapExtent.ymin + "," + mapExtent.xmax + "," + mapExtent.ymax;
-    url = dojo.string.substitute(tinyURLServiceURL.URL, [url]);
+//Open login page for flickr,tweet,email
+function ShareLink(ext) {
+    tinyUrl = null;
+    mapExtent = GetMapExtent();
+    var url = esri.urlToObject(windowURL);
+    var selectedAlerts = [];
+    var selectedSocialMediaFeeds = [];
+
+    dojo.query('input[type="checkbox"]', dojo.byId("divAccordianContainer")).forEach(function (node, index, arr) {
+        if (node.checked) {
+            selectedAlerts.push(index);
+        }
+    });
+
+    dojo.query('input[type="checkbox"]', dojo.byId("tableSocialServiceMedia")).forEach(function (node, index, arr) {
+        if (node.checked) {
+            selectedSocialMediaFeeds.push(dojo.attr(node, "feedKey"));
+        }
+    });
+    if (featureID) {
+        var urlStr = encodeURI(url.path) + "?e=" + mapExtent + "@t=" + shareSelectedTab + "@a=" + selectedAlerts.join(',') + "@s=" + selectedSocialMediaFeeds.join(',') + "@sd=" + shareSelectedRb + "@objectId=" + objectId + "@alertLayerID=" + alertLayerID + "@featureID=" + featureID;
+    } else if (objectId && alertLayerID) {
+        var urlStr = encodeURI(url.path) + "?e=" + mapExtent + "@t=" + shareSelectedTab + "@a=" + selectedAlerts.join(',') + "@s=" + selectedSocialMediaFeeds.join(',') + "@sd=" + shareSelectedRb + "@objectId=" + objectId + "@alertLayerID=" + alertLayerID;
+    } else if (feedID) {
+        var urlStr = encodeURI(url.path) + "?e=" + mapExtent + "@t=" + shareSelectedTab + "@a=" + selectedAlerts.join(',') + "@s=" + selectedSocialMediaFeeds.join(',') + "@sd=" + shareSelectedRb + "@f=" + feedID + "@socialLayerID=" + socialLayerID;
+    } else {
+        var urlStr = encodeURI(url.path) + "?e=" + mapExtent + "@t=" + shareSelectedTab + "@a=" + selectedAlerts.join(',') + "@s=" + selectedSocialMediaFeeds.join(',') + "@sd=" + shareSelectedRb;
+    }
+    url = dojo.string.substitute(mapSharingOptions.TinyURLServiceURL, [urlStr]);
 
     dojo.io.script.get({
         url: url,
         callbackParamName: "callback",
         load: function (data) {
-            var tinyUrl = data;
-            var attr = tinyURLServiceURL.ResponseAttribute.split(".");
+            tinyResponse = data;
+            tinyUrl = data;
+            var attr = mapSharingOptions.TinyURLResponseAttribute.split(".");
             for (var x = 0; x < attr.length; x++) {
                 tinyUrl = tinyUrl[attr[x]];
             }
-            switch (site) {
-                case "facebook":
-                    window.open(dojo.string.substitute(tinyURLServiceURL.FacebookShareURL, [tinyUrl]));
-                    break;
-                case "twitter":
-                    window.open(dojo.string.substitute(tinyURLServiceURL.TwitterShareURL, [tinyUrl]));
-                    break;
-                case "mail":
-                    parent.location = dojo.string.substitute(tinyURLServiceURL.MailShare, [tinyUrl]);
-                    //window.open(dojo.string.substitute(tinyURLServiceURL.MailShare, [tinyUrl]));
-                    break;
+            if (ext) {
+                HideBaseMapLayerContainer();
+                HideAddressContainer();
+                var cellHeight = 60;
+
+                if (dojo.coords("divAppContainer").h > 0) {
+                    HideShareAppContainer();
+                } else {
+                    dojo.byId('divAppContainer').style.height = cellHeight + "px";
+                    dojo.replaceClass("divAppContainer", "showContainerHeight", "hideContainerHeight");
+                }
             }
         },
         error: function (error) {
-            //            alert(error);
-            ShowDialog('Error', messages.getElementsByTagName("tinyURLEngine")[0].childNodes[0].nodeValue);
+            alert(tinyResponse.error);
         }
     });
+    setTimeout(function () {
+        if (!tinyResponse) {
+            alert(messages.getElementsByTagName("tinyURLEngine")[0].childNodes[0].nodeValue);
+            return;
+        }
+    }, 6000);
 }
 
-//Function for displaying Standby text
-function ShowLoadingMessage(loadingMessage) {
+//Open login page for facebook,tweet and open Email client with shared link for Email
+function Share(site) {
+    if (dojo.coords("divAppContainer").h > 0) {
+        dojo.replaceClass("divAppContainer", "hideContainerHeight", "showContainerHeight");
+        dojo.byId('divAppContainer').style.height = '0px';
+    }
+    if (tinyUrl) {
+        switch (site) {
+            case "facebook":
+                window.open(dojo.string.substitute(mapSharingOptions.FacebookShareURL, [tinyUrl]));
+                break;
+            case "twitter":
+                window.open(dojo.string.substitute(mapSharingOptions.TwitterShareURL, [tinyUrl]));
+                break;
+            case "mail":
+                parent.location = dojo.string.substitute(mapSharingOptions.ShareByMailLink, [tinyUrl]);
+                break;
+        }
+    } else {
+        alert(messages.getElementsByTagName("tinyURLEngine")[0].childNodes[0].nodeValue);
+        return;
+    }
+}
+
+//Displaying Standby text
+function ShowProgressIndicator() {
     dojo.byId('divLoadingIndicator').style.display = 'block';
-    dojo.byId('loadingMessage').innerHTML = loadingMessage;
 }
 
-
-//Function for hiding Standby text
-function HideLoadingMessage() {
+//Hiding Standby text
+function HideProgressIndicator() {
     dojo.byId('divLoadingIndicator').style.display = 'none';
 }
 
-//Function for showing Alert messages
-function ShowDialog(title, message) {
-    dojo.byId('divMessage').innerHTML = message;
-    var dialog = dijit.byId('dialogAlertMessage');
-    dialog.titleNode.innerHTML = title;
-    dialog.show();
-    dojo.byId('divOKButton').focus();
+//Get current map Extent
+function GetMapExtent() {
+    var extents = Math.round(map.extent.xmin).toString() + "," + Math.round(map.extent.ymin).toString() + "," +
+                  Math.round(map.extent.xmax).toString() + "," + Math.round(map.extent.ymax).toString();
+    return (extents);
 }
 
-//Function for hiding Alert messages
-function CloseDialog() {
-    dijit.byId('dialogAlertMessage').hide();
+//Get width of a control when text and font size are specified
+String.prototype.getWidth = function (fontSize) {
+    var test = document.createElement("span");
+    document.body.appendChild(test);
+    test.style.visibility = "hidden";
+    test.style.fontSize = fontSize + "px";
+    test.innerHTML = this;
+    var w = test.offsetWidth;
+    document.body.removeChild(test);
+    return w;
 }
 
-
-
-//function to create tab container
+//Create tab container
 function CreateTabContainer(containerId) {
     var i, tabContainer, tabContents, title, tabElement;
     var divElement, ulElement, liElement, tabLink, linkText;
 
     tabContainer = dojo.byId(containerId);
-
     tabContents = dojo.query(".tabContent", tabContainer);
-    if (tabContents.length == 0)
-        return;
+    if (tabContents.length == 0) return;
 
     divElement = document.createElement("div");
     divElement.className = 'tab-header'
@@ -198,7 +205,6 @@ function CreateTabContainer(containerId) {
 
     for (i = 0; i < tabContents.length; i++) {
         title = tabContents[i].getAttribute("header");
-
         // create the tabs as an unsigned list
         liElement = document.createElement("li");
         liElement.id = containerId + '-tab-' + i;
@@ -207,6 +213,7 @@ function CreateTabContainer(containerId) {
         linkText = document.createTextNode(title);
 
         tabLink.className = "tab-item";
+        tabLink.id = "tab" + i;
 
         tabLink.setAttribute("href", "javascript://");
         tabLink.setAttribute("title", tabContents[i].getAttribute("headerTitle"));
@@ -218,11 +225,13 @@ function CreateTabContainer(containerId) {
     }
 }
 
-//function to set active tab
+//Set active tab
 function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
-    CloseMapTip();
+    featureID = null;
+    objectId = null;
+    alertLayerID = null;
     var i, tabContainer, tabContents;
-
+    shareSelectedTab = activeTabIndex;
     tabContainer = document.getElementById(containerId);
 
     tabContents = dojo.query(".tabContent", tabContainer);
@@ -231,33 +240,58 @@ function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
     }
     dojo.disconnect(mapClickHandle);
     if (tabContents.length > 0) {
-        for (i = 0; i < tabContents.length; i++) {
-            tabContents[i].style.display = "none";
-        }
+        if (activeTabIndex == 1) {
+            if (dojo.byId("tab" + 1).style.display != "none") {
+                if (dojo.byId("tab" + 1).style.color == "none") {
+                    tabContents[1].style.display = "none";
+                }
+                else {
 
-        tabContents[activeTabIndex].style.display = "block";
+                    for (i = 0; i < tabContents.length; i++) {
+                        tabContents[i].style.display = "none";
+                    }
+                    tabContents[activeTabIndex].style.display = "block";
 
-        tabList = document.getElementById(containerId + '-list');
-        tabs = dojo.query(".tab-item", tabContainer);
-        if (tabs.length > 0) {
-            for (i = 0; i < tabs.length; i++) {
-                tabs[i].className = "tab-item";
+                    tabList = document.getElementById(containerId + '-list');
+                    tabs = dojo.query(".tab-item", tabContainer);
+                    if (tabs.length > 0) {
+                        for (i = 0; i < tabs.length; i++) {
+                            tabs[i].className = "tab-item";
+                        }
+                        tabs[activeTabIndex].className = "tab-item tab-active";
+                        tabs[activeTabIndex].blur();
+                    }
+
+                }
             }
-
-            tabs[activeTabIndex].className = "tab-item tab-active";
-            tabs[activeTabIndex].blur();
         }
+        else {
+            for (i = 0; i < tabContents.length; i++) {
+                tabContents[i].style.display = "none";
+            }
+            tabContents[activeTabIndex].style.display = "block";
+
+            tabList = document.getElementById(containerId + '-list');
+            tabs = dojo.query(".tab-item", tabContainer);
+            if (tabs.length > 0) {
+                for (i = 0; i < tabs.length; i++) {
+                    tabs[i].className = "tab-item";
+                }
+                tabs[activeTabIndex].className = "tab-item tab-active";
+                tabs[activeTabIndex].blur();
+            }
+        }
+
     }
 
     if (isMapInitialized) {
         map.infoWindow.hide();
-        map.getLayer(tempPointLayer).clear();
+        map.getLayer(tempGraphicsLayerId).clear();
+        selectedGraphic = null;
         //To store the current state of layers info and populate it when clicked on Alerts tab
         if (activeTabIndex == 0) {
             map.getLayer(serviceRequestLayerInfo.Key).hide();
-
             dojo.byId('divAlertsLegend').style.display = 'block';
-
             dojo.byId('divServiceRequestLegend').style.display = "none";
             map.getLayer(tempServiceRequestLayerId).clear();
             map.setMapCursor('default');
@@ -280,73 +314,79 @@ function ActivateTab(containerId, activeTabIndex, isMapInitialized) {
                 var id = selectedTab[0].getAttribute("key");
                 CreateScrollbar(dojo.byId(id), dojo.byId(id + "Content"));
             }
-        }
-        else if (activeTabIndex == 1) {
+        } else if (activeTabIndex == 1) {
             mapClickHandle = dojo.connect(map, "onClick", function (evt) {
+                map.infoWindow.hide();
                 // Remove any existing graphics
                 map.getLayer(tempServiceRequestLayerId).clear();
-
-                // Add a graphic to the display at the map click point
-                var symbol = new esri.symbol.PictureMarkerSymbol(serviceRequestSymbolURL, 22, 22);
+                selectedGraphic = null;
+                if (serviceRequestSymbolURL) {
+                    var symbol = new esri.symbol.PictureMarkerSymbol(serviceRequestSymbolURL, 22, 22);
+                } else {
+                    // Add a graphic to the display at the map click point
+                    var symbol = new esri.symbol.SimpleMarkerSymbol(serviceRequestSymbolStyle, serviceRequestSymbolSize,
+                    new esri.symbol.SimpleLineSymbol(serviceRequestSymbolOutlineStyle, new dojo.Color(serviceRequestSymbolOutlineColor), serviceRequestSymbolOutlineWidth), new dojo.Color(serviceRequestSymbolColor));
+                }
                 var graphic = new esri.Graphic(evt.mapPoint, symbol, null, null);
                 map.getLayer(tempServiceRequestLayerId).add(graphic);
             });
-
             // Do other tab setups
             ClearHideSocialMediaLayers();
             ToggleServiceRequestLayer(true);
             ResetRequestValues();
             SaveAlertState();
-        }
-        else {
+            dojo.byId('divDataContainer').style.height = (map.height - 277) + "px";
+            dojo.byId('divDataContent').style.height = (map.height - 277) + "px";
+            CreateScrollbar(dojo.byId('divDataContainer'), dojo.byId('divDataContent'));
+        } else {
             map.getLayer(serviceRequestLayerInfo.Key).hide();
-
             dojo.byId('divAlertsLegend').style.display = 'block';
             dojo.byId('divServiceRequestLegend').style.display = "none";
             map.getLayer(tempServiceRequestLayerId).clear();
-            //dojo.disconnect(mapClickHandle);
             map.setMapCursor('default');
             ToggleServiceRequestLayer(false);
             SaveAlertState();
         }
     }
-
 }
 
-//function to slide left paenl
+//Slide left panel
 function AnimateDetailsView() {
-    var node = dojo.byId('divLeftPanelBackground');
-    if (dojo.coords(node).l == 0) {
-
-        var divBackground = dojo.fx.slideTo({ node: node, duration: 1000, properties: { left: { end: -400, unit: "px"}} });
-        var divContent = dojo.fx.slideTo({ node: dojo.byId('divServiceDetailPanel'), duration: 1000, properties: { left: { end: -400, unit: "px"}} });
-        var imageToggle = dojo.fx.slideTo({ node: dojo.byId('divToggleDetail'), duration: 1000, properties: { left: { end: 0, unit: "px"}} });
-        var esriLogo = dojo.fx.slideTo({ node: dojo.query('.esriLogo', dojo.byId('map'))[0], duration: 1000, properties: { left: { end: 15, unit: "px"}} });
-        var mapSlider = dojo.fx.slideTo({ node: dojo.byId('map_zoom_slider'), duration: 1000, properties: { left: { end: 15, unit: "px"}} });
-        var combinedAnimation = dojo.fx.combine([divBackground, divContent, imageToggle, esriLogo, mapSlider]);
-        dojo.connect(combinedAnimation, "onEnd", function () {
+    if (dojo.byId("divToggleDetail").style.cursor != "default") {
+        var node = dojo.byId('divLeftPanelBackground');
+        if (dojo.coords(node).l == 0) {
             dojo.byId('divToggleDetail').className = "divToggleDetailCollapse";
+            dojo.addClass(dojo.byId('divToggleDetail'), "divToggleDetail");
             dojo.byId('divToggleDetail').title = "Show Panel";
-
-        });
-        combinedAnimation.play();
-    }
-    else {
-        var divBackground = dojo.fx.slideTo({ node: node, duration: 1000, properties: { left: { end: 0, unit: "px"}} });
-        var divContent = dojo.fx.slideTo({ node: dojo.byId('divServiceDetailPanel'), duration: 1000, properties: { left: { end: 0, unit: "px"}} });
-        var imageToggle = dojo.fx.slideTo({ node: dojo.byId('divToggleDetail'), duration: 1000, properties: { left: { end: 400, unit: "px"}} });
-        var esriLogo = dojo.fx.slideTo({ node: dojo.query('.esriLogo', dojo.byId('map'))[0], duration: 1000, properties: { left: { end: 415, unit: "px"}} });
-        var mapSlider = dojo.fx.slideTo({ node: dojo.byId('map_zoom_slider'), duration: 1000, properties: { left: { end: 415, unit: "px"}} });
-        var combinedAnimation = dojo.fx.combine([divBackground, divContent, imageToggle, esriLogo, mapSlider]);
-        dojo.connect(combinedAnimation, "onEnd", function () {
+            node.style.left = "-400px";
+            dojo.addClass(node, "slidePanel");
+            dojo.byId('divServiceDetailPanel').style.left = "-400px";
+            dojo.addClass(dojo.byId('divServiceDetailPanel'), "slidePanel");
+            dojo.byId('divToggleDetail').style.left = "0px";
+            dojo.addClass(dojo.byId('divToggleDetail'), "slidePanel");
+            dojo.query('.esriLogo', dojo.byId('map'))[0].style.left = "15px";
+            dojo.addClass(dojo.query('.esriLogo', dojo.byId('map'))[0], "slidePanel");
+            dojo.byId('map_zoom_slider').style.left = "15px";
+            dojo.addClass(dojo.byId('map_zoom_slider'), "slidePanel");
+        } else {
             dojo.byId('divToggleDetail').className = "divToggleDetailExpand";
+            dojo.addClass(dojo.byId('divToggleDetail'), "divToggleDetail");
             dojo.byId('divToggleDetail').title = "Hide Panel";
-        });
-        combinedAnimation.play();
+            node.style.left = "0px";
+            dojo.addClass(node, "slidePanel");
+            dojo.byId('divServiceDetailPanel').style.left = "0px";
+            dojo.addClass(dojo.byId('divServiceDetailPanel'), "slidePanel");
+            dojo.byId('divToggleDetail').style.left = "400px";
+            dojo.addClass(dojo.byId('divToggleDetail'), "slidePanel");
+            dojo.query('.esriLogo', dojo.byId('map'))[0].style.left = "415px";
+            dojo.addClass(dojo.query('.esriLogo', dojo.byId('map'))[0], "slidePanel");
+            dojo.byId('map_zoom_slider').style.left = "415px";
+            dojo.addClass(dojo.byId('map_zoom_slider'), "slidePanel");
+        }
     }
 }
 
-//function to highlight layer
+//Highlight layer
 function HighlightFeature(mapPoint, highlightColor) {
     HideRipple();
     var layer = map.getLayer(tempGlowLayerId);
@@ -356,14 +396,13 @@ function HighlightFeature(mapPoint, highlightColor) {
         layer.clear();
         if (i == 20) {
             flag = false;
-        }
-        else if (i == 16) {
+        } else if (i == 16) {
             flag = true;
         }
         var symbol = new esri.symbol.SimpleMarkerSymbol(esri.symbol.SimpleMarkerSymbol.STYLE_CIRCLE, (i - 1) * 2.5,
-                           new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID,
-                           new dojo.Color(highlightColor), 5),
-                           new dojo.Color([0, 0, 0, 0]));
+        new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID,
+        new dojo.Color(highlightColor), 5),
+        new dojo.Color([0, 0, 0, 0]));
 
         var graphic = new esri.Graphic(mapPoint, symbol, null, null);
         layer.add(graphic);
@@ -388,17 +427,15 @@ function ClearAllIntervals() {
     intervalIDs.length = 0;
 }
 
-//function to show error message span
+//Show error message span
 function ShowSpanErrorMessage(controlId, message) {
     dojo.byId(controlId).style.display = "block";
     dojo.byId(controlId).innerHTML = message;
 }
 
-//Function for validating Email in comments tab
+//Validating Email in comments tab
 function CheckMailFormat(emailValue) {
-    //    var pattern = /^([a-zA-Z0-9_.-])+@([a-zA-Z0-9_.-])+\.([a-zA-Z])+([a-zA-Z])+/;
-    //    var pattern = /^(?:\w+\.?)*\w+@(?:\w+\.)+\w+$/;
-    var pattern = /^([a-zA-Z][a-zA-Z0-9\_\-\.]*\@[a-zA-Z0-9\-]*\.[a-zA-Z]{2,4})?$/i
+    var pattern = /^([a-zA-Z])([a-zA-Z0-9])*((\.){0,1}(\_){0,1}(\-){0,1}([a-zA-Z0-9])+)*@(([a-zA-Z0-9])+(\.))+([a-zA-Z]{2,4})+$/;
     if (pattern.test(emailValue)) {
         return true;
     } else {
@@ -406,9 +443,8 @@ function CheckMailFormat(emailValue) {
     }
 }
 
-//function to validate name
+//Validate name
 function IsName(name) {
-    //    var namePattern = /^[A-Za-z\.\-\, ]{1,150}$/;
     var namePattern = /^[A-Za-z\.\-\-', ]{3,100}$/;
     if (namePattern.test(name)) {
         return true;
@@ -417,21 +453,23 @@ function IsName(name) {
     }
 }
 
-//function to validate US ZIP code
+//Validate US ZIP code
 function isValidZipCode(value) {
     var re = /^\d{5}([\-]\d{4})?$/;
     return re.test(value);
 }
 
-//function to trim string
-String.prototype.trim = function () { return this.replace(/^\s+|\s+$/g, ''); }
+//Trim string
+String.prototype.trim = function () {
+    return this.replace(/^\s+|\s+$/g, '');
+}
 
 //Function to append ... for a string
 String.prototype.trimString = function (len) {
     return (this.length > len) ? this.substring(0, len) + "..." : this;
 }
 
-//function to create custom scroll bar
+//Create custom scroll-bar
 function CreateScrollbar(container, content) {
     var yMax;
     var pxLeft, pxTop, xCoord, yCoord;
@@ -441,15 +479,14 @@ function CreateScrollbar(container, content) {
     this.content = content;
 
     if (dojo.byId(container.id + 'scrollbar_track')) {
-        RemoveChildren(dojo.byId(container.id + 'scrollbar_track'));
+        dojo.empty(dojo.byId(container.id + 'scrollbar_track'));
         container.removeChild(dojo.byId(container.id + 'scrollbar_track'));
     }
     if (!dojo.byId(container.id + 'scrollbar_track')) {
         scrollbar_track = document.createElement('div');
         scrollbar_track.id = container.id + "scrollbar_track";
         scrollbar_track.className = "scrollbar_track";
-    }
-    else {
+    } else {
         scrollbar_track = dojo.byId(container.id + 'scrollbar_track');
     }
 
@@ -466,8 +503,7 @@ function CreateScrollbar(container, content) {
     if (content.scrollHeight <= content.offsetHeight) {
         scrollbar_handle.style.display = 'none';
         return;
-    }
-    else {
+    } else {
         scrollbar_handle.style.display = 'block';
         scrollbar_handle.style.height = Math.max(this.content.offsetHeight * (this.content.offsetHeight / this.content.scrollHeight), 25) + 'px';
         yMax = this.content.offsetHeight - scrollbar_handle.offsetHeight;
@@ -475,9 +511,7 @@ function CreateScrollbar(container, content) {
         if (window.addEventListener) {
             content.addEventListener('DOMMouseScroll', ScrollDiv, false);
         }
-
         content.onmousewheel = function (evt) {
-            console.log(content.id);
             ScrollDiv(evt);
         }
     }
@@ -493,8 +527,7 @@ function CreateScrollbar(container, content) {
             if (y < 0) y = 0 // Limit vertical movement
             scrollbar_handle.style.top = y + "px";
             content.scrollTop = Math.round(scrollbar_handle.offsetTop / yMax * (content.scrollHeight - content.offsetHeight));
-        }
-        else {
+        } else {
             var y = pxTop - 10;
             if (y > yMax) y = yMax // Limit vertical movement
             if (y < 0) y = 0 // Limit vertical movement
@@ -512,21 +545,17 @@ function CreateScrollbar(container, content) {
             if (!evt.offsetY) {
                 var coords = dojo.coords(evt.target);
                 offsetY = evt.layerY - coords.t;
-            }
-            else
-                offsetY = evt.offsetY;
+            } else offsetY = evt.offsetY;
             if (offsetY < scrollbar_handle.offsetTop) {
                 scrollbar_handle.style.top = offsetY + "px";
                 content.scrollTop = Math.round(scrollbar_handle.offsetTop / yMax * (content.scrollHeight - content.offsetHeight));
-            }
-            else if (offsetY > (scrollbar_handle.offsetTop + scrollbar_handle.clientHeight)) {
+            } else if (offsetY > (scrollbar_handle.offsetTop + scrollbar_handle.clientHeight)) {
                 var y = offsetY - scrollbar_handle.clientHeight;
                 if (y > yMax) y = yMax // Limit vertical movement
                 if (y < 0) y = 0 // Limit vertical movement
                 scrollbar_handle.style.top = y + "px";
                 content.scrollTop = Math.round(scrollbar_handle.offsetTop / yMax * (content.scrollHeight - content.offsetHeight));
-            }
-            else {
+            } else {
                 return;
             }
         }
@@ -547,7 +576,6 @@ function CreateScrollbar(container, content) {
             return false;
         }
         document.onmousemove = function (evt) {
-            console.log("inside mousemove");
             evt = (evt) ? evt : event;
             evt.cancelBubble = true;
             if (evt.stopPropagation) evt.stopPropagation();
@@ -569,7 +597,7 @@ function CreateScrollbar(container, content) {
     };
 }
 
-//function to refresh scrollbar
+//Refresh scrollbar
 function RefreshScrollBar(container, handle) {
     var container = dojo.byId(container);
     var handle = dojo.byId(handle);
@@ -578,35 +606,7 @@ function RefreshScrollBar(container, handle) {
     yMax = this.container.offsetHeight - this.handle.offsetHeight;
 }
 
-//Function for displaying loading image in comments tab
-function ShowDojoLoading(target) {
-    dijit.byId('dojoStandBy').target = target;
-    dijit.byId('dojoStandBy').show();
-}
-
-//Function for hiding loading image
-function HideDojoLoading() {
-    dijit.byId('dojoStandBy').hide();
-}
-
-//function to find custom anchor point
-function GetInfoWindowAnchor(pt, infoWindowWidth) {
-    var verticalAlign;
-    if (pt.y < map.height / 2) {
-        verticalAlign = "LOWER";
-    }
-    else {
-        verticalAlign = "UPPER";
-    }
-    if ((pt.x + infoWindowWidth) > map.width) {
-        return esri.dijit.InfoWindow["ANCHOR_" + verticalAlign + "LEFT"];
-    }
-    else {
-        return esri.dijit.InfoWindow["ANCHOR_" + verticalAlign + "RIGHT"];
-    }
-}
-
-//function to create checkbox
+//Create checkbox
 function CreateCheckBox(chkBoxId, chkBoxValue, isChecked) {
     var cb = document.createElement("input");
     cb.type = "checkbox";
@@ -616,122 +616,64 @@ function CreateCheckBox(chkBoxId, chkBoxValue, isChecked) {
     return cb;
 }
 
-//function to get UTC date for the given days
+//Get UTC date for the given days
 function GetUTCDate(days, dateFormat) {
     var date = new js.date();
     var today = date.utcTimestampNow();
     today.setDate(today.getDate() - days);
     if (dateFormat) {
-        return dojo.date.locale.format(today, { datePattern: dateFormat, selector: "date" });
-    }
-    else {
+        return dojo.date.locale.format(today, {
+            datePattern: dateFormat,
+            selector: "date"
+        });
+    } else {
         return date.utcMsFromTimestamp(date.localToUtc(date.localTimestampNow()));
     }
 }
 
-//Function for toggling the search according to service request or address
-function ToggleSearch(control) {
-    if (dojo.coords(dojo.byId('divAddressContainer')).h > 0) {
-        WipeOutControl(dojo.byId('divAddressContainer'), 500);
-    }
-
-    if (control.id == 'spanAddress') {
-        dojo.byId('rbAddress').checked = true;
-        dojo.byId('rbAddress').className = 'text';
-        dojo.byId('spanAddress').className = 'text';
-        dojo.byId('spanServiceRequestID').className = 'disabledText';
-        dojo.byId('txtAddress').title = 'Enter an address to locate';
-        dojo.byId('txtAddress').setAttribute('placeholder', "");
-        dojo.byId('txtAddress').value = defaultAddress;
-
-    }
-    else {
-        dojo.byId('rbServiceRequest').checked = true;
-        dojo.byId('rbServiceRequest').className = 'text';
-        dojo.byId('spanServiceRequestID').className = 'text';
-        dojo.byId('spanAddress').className = 'disabledText';
-        dojo.byId('txtAddress').title = 'Enter service request number';
-        dojo.byId('txtAddress').setAttribute('placeholder', "Enter service request number");
-        dojo.byId("txtAddress").value = '';
-    }
-
-
-}
-
-//function to teggle search from radio button click
-function RadioButtonClicked(rbControl) {
-
-    if (dojo.coords(dojo.byId('divAddressContainer')).h > 0) {
-        WipeOutControl(dojo.byId('divAddressContainer'), 500);
-    }
-    if (rbControl.id == 'rbAddress') {
-        dojo.byId('spanAddress').className = 'text';
-        dojo.byId('spanServiceRequestID').className = 'disabledText';
-        dojo.byId('txtAddress').title = 'Enter an address to locate';
-        dojo.byId('txtAddress').setAttribute('placeholder', "");
-        dojo.byId('txtAddress').value = defaultAddress;
-
-    }
-    else {
-        dojo.byId('spanAddress').className = 'disabledText';
-        dojo.byId('spanServiceRequestID').className = 'text';
-        dojo.byId('txtAddress').title = 'Enter service request number';
-        dojo.byId('txtAddress').setAttribute('placeholder', "Enter service request number");
-        dojo.byId("txtAddress").value = '';
-    }
-}
-
-
-//function to create Rating widget
+//Create Rating widget
 function CreateRatingWidget(rating) {
     var numberStars = Number(rating.getAttribute("numstars"));
     var isReadOnly = String(rating.getAttribute("readonly")).bool();
-
     for (var i = 0; i < numberStars; i++) {
         var li = document.createElement("li");
         li.value = (i + 1);
-        li.className = "ratingStar";
+        li.className = isReadOnly ? "ratingStar" : "ratingStarBig";
         rating.appendChild(li);
-
         if (i < rating.value) {
-            dojo.addClass(li, "ratingStarChecked");
+            dojo.addClass(li, isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
         }
-
         li.onmouseover = function () {
             if (!isReadOnly) {
                 var ratingValue = Number(this.value);
-                var ratingStars = dojo.query(".ratingStar", rating);
+                var ratingStars = dojo.query(isReadOnly ? ".ratingStar" : ".ratingStarBig", rating);
                 for (var i = 0; i < ratingValue; i++) {
-                    dojo.addClass(ratingStars[i], "ratingStarChecked");
+                    dojo.addClass(ratingStars[i], isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
                 }
             }
         }
-
         li.onmouseout = function () {
             if (!isReadOnly) {
                 var ratings = Number(rating.value);
-                var ratingStars = dojo.query(".ratingStar", rating);
+                var ratingStars = dojo.query(isReadOnly ? ".ratingStar" : ".ratingStarBig", rating);
                 for (var i = 0; i < ratingStars.length; i++) {
                     if (i < ratings) {
-                        dojo.addClass(ratingStars[i], "ratingStarChecked");
-                    }
-                    else {
-                        dojo.removeClass(ratingStars[i], "ratingStarChecked");
+                        dojo.addClass(ratingStars[i], isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
+                    } else {
+                        dojo.removeClass(ratingStars[i], isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
                     }
                 }
             }
         }
-
         li.onclick = function () {
             if (!isReadOnly) {
                 rating.value = Number(this.value);
-                var ratingStars = dojo.query(".ratingStar", rating);
+                var ratingStars = dojo.query(isReadOnly ? ".ratingStar" : ".ratingStarBig", rating);
                 for (var i = 0; i < ratingStars.length; i++) {
                     if (i < this.value) {
-                        dojo.addClass(ratingStars[i], "ratingStarChecked");
-                    }
-                    else {
-                        dojo.removeClass(ratingStars[i], "ratingStarChecked");
+                        dojo.addClass(ratingStars[i], isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
+                    } else {
+                        dojo.removeClass(ratingStars[i], isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
                     }
                 }
             }
@@ -742,23 +684,23 @@ function CreateRatingWidget(rating) {
 //Set rating for rating control
 function SetRating(control, rating) {
     control.value = rating;
-    var ratingStars = dojo.query(".ratingStar", control);
+    var isReadOnly = String(control.getAttribute("readonly")).bool();
+    var ratingStars = dojo.query(isReadOnly ? ".ratingStar" : ".ratingStarBig", control);
     for (var i = 0; i < ratingStars.length; i++) {
         if (i < rating) {
-            dojo.addClass(ratingStars[i], "ratingStarChecked");
-        }
-        else {
-            dojo.removeClass(ratingStars[i], "ratingStarChecked");
+            dojo.addClass(ratingStars[i], isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
+        } else {
+            dojo.removeClass(ratingStars[i], isReadOnly ? "ratingStarChecked" : "ratingStarBigChecked");
         }
     }
 }
 
-//function to convert string to bool
+//Convert string to bool
 String.prototype.bool = function () {
     return (/^true$/i).test(this);
 };
 
-//function to return indexof an element
+//Return index of an element
 function ElementIndexOf(array, element) {
     for (var index in array) {
         if (array[index] == element) {
@@ -768,151 +710,316 @@ function ElementIndexOf(array, element) {
     return -1;
 }
 
-//Function to get the query string value of the provided key if not found the function returns empty string
+//Get the query string value of the provided key if not found the function returns empty string
 function GetQuerystring(key) {
     var _default;
     if (_default == null) _default = "";
     key = key.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
     var regex = new RegExp("[\\?&]" + key + "=([^&#]*)");
     var qs = regex.exec(window.location.href);
-    if (qs == null)
-        return _default;
-    else
-        return qs[1];
+    if (qs == null) return _default;
+    else return qs[1];
 }
 
-//function to create textarea
-function CreateTextArea(id, width, height, className) {
-    var txtArea = document.createElement("textarea");
-    txtArea.id = id;
-    txtArea.style.height = height;
-    txtArea.style.width = width;
-    txtArea.className = className;
-    return txtArea;
+//Hide splash screen container
+function HideSplashScreenMessage() {
+    if (dojo.isIE < 9) {
+        dojo.byId("divSplashScreenContent").style.display = "none";
+    }
+    dojo.addClass('divSplashScreenContainer', "opacityHideAnimation");
+    dojo.replaceClass("divSplashScreenContent", "hideContainer", "showContainer");
 }
 
-//function to close maptip
-function CloseMapTip() {
-    if (dijit.byId('toolTipDialog')) {
-        dijit.byId('toolTipDialog').destroy();
+//Set height for splash screen
+function SetSplashScreenHeight() {
+    var height = dojo.coords(dojo.byId('divSplashScreenContent')).h - 80;
+    dojo.byId('divSplashContent').style.height = (height + 14) + "px";
+    CreateScrollbar(dojo.byId("divSplashContainer"), dojo.byId("divSplashContent"));
+}
+
+//Hide share link container
+function HideShareAppContainer() {
+    dojo.replaceClass("divAppContainer", "hideContainerHeight", "showContainerHeight");
+    dojo.byId('divAppContainer').style.height = '0px';
+}
+
+//Show address container with wipe-in animation
+function ShowLocateContainer() {
+    HideBaseMapLayerContainer();
+    HideShareAppContainer();
+
+    if (dojo.coords("divAddressContent").h > 0) {
+        HideAddressContainer();
+        dojo.byId('txtAddress').blur();
+    } else {
+        ResetSearchContainer();
+        dojo.byId('divAddressContent').style.height = "300px";
+        dojo.replaceClass("divAddressContent", "showContainerHeight", "hideContainerHeight");
+    }
+    RemoveChildren(dojo.byId('tblAddressResults'));
+    SetAddressResultsHeight();
+}
+
+function ResetSearchContainer() {
+    if (dojo.byId("tdSearchAddress").className.trim() == "tdSearchByAddress") {
+        dojo.byId("txtAddress").value = dojo.byId("txtAddress").getAttribute("defaultAddress");
+    } else {
+        dojo.byId("txtAddress").value = dojo.byId("txtAddress").getAttribute("defaultRequestId");
+    }
+    dojo.byId("txtAddress").style.color = "gray";
+    dojo.byId("imgSearchLoader").style.display == "none";
+}
+
+//Set height for address results and create scrollbar
+function SetAddressResultsHeight() {
+    var height = dojo.coords(dojo.byId('divAddressContent')).h;
+    var containerHeight;
+    if (dojo.byId("tdSearchAddress").style.display != "none") {
+        containerHeight = 165;
+    }
+    else {
+        containerHeight = 150;
+    }
+
+    if (height > 0) {
+        dojo.byId('divAddressScrollContent').style.height = (height - containerHeight) + "px";
+    }
+    CreateScrollbar(dojo.byId("divAddressScrollContainer"), dojo.byId("divAddressScrollContent"));
+}
+
+//Set height for view details
+function SetAlertDetailsHeight() {
+    var height = dojo.coords(dojo.byId('divInfoWindowContent')).h;
+    if (height > 0) {
+        dojo.byId('divInfoWindowDetailsScroll').style.height = (height - 55) + "px";
+    }
+    CreateScrollbar(dojo.byId("divInfoWindowDetails"), dojo.byId("divInfoWindowDetailsScroll"));
+}
+
+//Hide address container with wipe-out animation
+function HideAddressContainer() {
+    dojo.byId("imgSearchLoader").style.display = "none";
+    dojo.byId("txtAddress").blur();
+    dojo.replaceClass("divAddressContent", "hideContainerHeight", "showContainerHeight");
+    dojo.byId('divAddressContent').style.height = '0px';
+    isContainerVisible = false;
+}
+
+//Clear default value for text box controls
+function ClearDefaultText(e) {
+    var target = window.event ? window.event.srcElement : e ? e.target : null;
+    if (!target) return;
+    target.style.color = "#FFF";
+    target.value = '';
+}
+
+//Set default value on blur
+function ReplaceDefaultText(e) {
+    var target = window.event ? window.event.srcElement : e ? e.target : null;
+    if (!target) return;
+
+    if (dojo.byId("tdSearchServiceId").className == "tdSearchByServiceId") {
+        ResetTargetValue(target, "defaultRequestId", "gray");
+    } else {
+        ResetTargetValue(target, "defaultAddress", "gray");
     }
 }
 
-//function to show maptip
-function ShowMapTip(evtArgs, content) {
-    CloseMapTip();
-    var dialog = new dijit.TooltipDialog({
-        id: "toolTipDialog",
-        content: '<span style="font-size:11px; font-family:Verdana;">' + content + '</span> ',
-        style: "position: absolute; z-index:1000;"
-    });
-    dialog.startup();
-    dojo.style(dialog.domNode, "opacity", 0.80);
-    dijit.placeOnScreen(dialog.domNode, { x: evtArgs.pageX, y: evtArgs.pageY }, ["BL", "BR"], { x: 5, y: 5 });
-}
-
-//function to hide BaseMapWidget onmouseout
-function HideBaseMapWidget() {
-    dijit.byId('imgBaseMap').attr("checked", false);
-    var node = dojo.byId('divBaseMapTitleContainer');
-    if (dojo.coords(node).h > 0) {
-        WipeOutControl(node, 500);
-    }
-}
-
-//function to hide application share widget onmouseout
-function HideApplicationShareWidget() {
-    dijit.byId('imgapplink').attr("checked", false);
-    //ToggleApplication();
-    var node = dojo.byId('divAppContainer');
-
-    if (dojo.coords(node).h > 0) {
-        WipeOutControl(node, 500);
-    }
-}
-
-//function to hide splashscreen message
-function HideSplashScreen() {
-    dijit.byId('dialogLoadMessage').hide();
-    window.onkeydown = null;
-}
-
-var customMouseHandler =
-{
-    evtHash: [],
-
-    ieGetUniqueID: function (_elem) {
-        if (_elem === window) { return 'theWindow'; }
-        else if (_elem === document) { return 'theDocument'; }
-        else { return _elem.uniqueID; }
-    },
-
-    addEvent: function (_elem, _evtName, _fn, _useCapture) {
-        if (typeof _elem.addEventListener != 'undefined') {
-            if (_evtName == 'mouseenter')
-            { _elem.addEventListener('mouseover', customMouseHandler.mouseEnter(_fn), _useCapture); }
-            else if (_evtName == 'mouseleave')
-            { _elem.addEventListener('mouseout', customMouseHandler.mouseEnter(_fn), _useCapture); }
-            else
-            { _elem.addEventListener(_evtName, _fn, _useCapture); }
+//Set changed value for address/request id
+function ResetTargetValue(target, title, color) {
+    if (target.value == '' && target.getAttribute(title)) {
+        target.value = target.title;
+        if (target.title == "") {
+            target.value = target.getAttribute(title);
         }
-        else if (typeof _elem.attachEvent != 'undefined') {
-            var key = '{FNKEY::obj_' + customMouseHandler.ieGetUniqueID(_elem) + '::evt_' + _evtName + '::fn_' + _fn + '}';
-            var f = customMouseHandler.evtHash[key];
-            if (typeof f != 'undefined')
-            { return; }
+    }
+    target.style.color = color;
+    lastSearchString = dojo.byId("txtAddress").value.trim();
+}
 
-            f = function () {
-                _fn.call(_elem);
-            };
+//Display the current location of the user
+function ShowMyLocation() {
+    HideBaseMapLayerContainer();
+    HideShareAppContainer();
+    HideAddressContainer();
+    navigator.geolocation.getCurrentPosition(
 
-            customMouseHandler.evtHash[key] = f;
-            _elem.attachEvent('on' + _evtName, f);
-
-            // attach unload event to the window to clean up possibly IE memory leaks
-            window.attachEvent('onunload', function () {
-                _elem.detachEvent('on' + _evtName, f);
-            });
-
-            key = null;
-            //f = null;   /* DON'T null this out, or we won't be able to detach it */
-        }
-        else
-        { _elem['on' + _evtName] = _fn; }
-    },
-
-    removeEvent: function (_elem, _evtName, _fn, _useCapture) {
-        if (typeof _elem.removeEventListener != 'undefined')
-        { _elem.removeEventListener(_evtName, _fn, _useCapture); }
-        else if (typeof _elem.detachEvent != 'undefined') {
-            var key = '{FNKEY::obj_' + customMouseHandler.ieGetUniqueID(_elem) + '::evt' + _evtName + '::fn_' + _fn + '}';
-            var f = customMouseHandler.evtHash[key];
-            if (typeof f != 'undefined') {
-                _elem.detachEvent('on' + _evtName, f);
-                delete customMouseHandler.evtHash[key];
+    function (position) {
+        ShowProgressIndicator();
+        mapPoint = new esri.geometry.Point(position.coords.longitude, position.coords.latitude, new esri.SpatialReference({
+            wkid: 4326
+        }));
+        var graphicCollection = new esri.geometry.Multipoint(new esri.SpatialReference({
+            wkid: 4326
+        }));
+        graphicCollection.addPoint(mapPoint);
+        geometryService.project([graphicCollection], map.spatialReference, function (newPointCollection) {
+            for (var bMap = 0; bMap < baseMapLayers.length; bMap++) {
+                if (map.getLayer(baseMapLayers[bMap].Key).visible) {
+                    var bmap = baseMapLayers[bMap].Key;
+                }
             }
+            if (!map.getLayer(bmap).fullExtent.contains(newPointCollection[0].getPoint(0))) {
+                mapPoint = null;
+                selectedGraphic = null;
+                map.getLayer(tempGraphicsLayerId).clear();
+                map.infoWindow.hide();
+                HideProgressIndicator();
+                alert(messages.getElementsByTagName("geoLocation")[0].childNodes[0].nodeValue);
+                return;
+            }
+            mapPoint = newPointCollection[0].getPoint(0);
+            map.setLevel(locatorSettings.Locators[0].ZoomLevel);
+            map.centerAt(mapPoint);
+            var graphic = new esri.Graphic(mapPoint, locatorMarkupSymbol, {
+                "Locator": true
+            }, null);
+            map.getLayer(tempGraphicsLayerId).add(graphic);
 
-            key = null;
-            //f = null;   /* DON'T null this out, or we won't be able to detach it */
-        }
+            HideProgressIndicator();
+        });
     },
 
-    mouseEnter: function (_pFn) {
-        return function (_evt) {
-            var relTarget = _evt.relatedTarget;
-            if (this == relTarget || customMouseHandler.isAChildOf(this, relTarget))
-            { return; }
-
-            _pFn.call(this, _evt);
+    function (error) {
+        HideProgressIndicator();
+        switch (error.code) {
+            case error.TIMEOUT:
+                alert(messages.getElementsByTagName("geolocationTimeout")[0].childNodes[0].nodeValue);
+                break;
+            case error.POSITION_UNAVAILABLE:
+                alert(messages.getElementsByTagName("geolocationPositionUnavailable")[0].childNodes[0].nodeValue);
+                break;
+            case error.PERMISSION_DENIED:
+                alert(messages.getElementsByTagName("geolocationPermissionDenied")[0].childNodes[0].nodeValue);
+                break;
+            case error.UNKNOWN_ERROR:
+                alert(messages.getElementsByTagName("geolocationUnKnownError")[0].childNodes[0].nodeValue);
+                break;
         }
-    },
+    }, {
+        timeout: 10000
+    });
+}
 
-    isAChildOf: function (_parent, _child) {
-        if (_parent == _child) { return false };
-
-        while (_child && _child != _parent)
-        { _child = _child.parentNode; }
-
-        return _child == _parent;
+//Show Info request directions view
+function ShowInfoDirectionsView() {
+    if (dojo.byId('imgDirections').getAttribute("disp") == "Details") {
+        dojo.byId('tdDirections').appendChild(dojo.byId('imgDirections'));
+        dojo.byId('imgComments').src = "images/comments.png";
+        dojo.byId('imgComments').title = "Comments";
+        dojo.byId('imgComments').setAttribute("disp", "Comments");
+        dojo.byId('divInfoComments').style.display = "none";
+        dojo.byId('divInfoAttachments').style.display = "none";
+        dojo.byId('divInfoDetails').style.display = "block";
+        dojo.byId('imgDirections').style.display = "none";
+        dojo.byId('imgComments').style.display = "block";
+        dojo.byId("imgAttachments").style.display = "block";
+        SetViewDetailsHeight();
     }
-};
+}
+
+//Show comments view
+function ShowCommentsView() {
+    if (showCommentsTab) {
+        dojo.byId("imgComments").style.display = "none";
+        dojo.byId('tdComments').appendChild(dojo.byId('imgDirections'));
+        dojo.byId('imgDirections').src = "images/Details.png";
+        dojo.byId('imgDirections').title = "Details";
+        dojo.byId('imgDirections').setAttribute("disp", "Details");
+        dojo.byId("imgDirections").style.display = "block";
+        dojo.byId("imgAttachments").style.display = "block";
+        ResetCommentValues();
+        dojo.byId('divInfoComments').style.display = "block";
+        dojo.byId('divInfoDetails').style.display = "none";
+        dojo.byId('divInfoAttachments').style.display = "none";
+        SetCommentHeight();
+    }
+}
+
+//Show attachments view
+function ShowAttachmentsView() {
+    dojo.byId('tdDirections').appendChild(dojo.byId('imgDirections'));
+    dojo.byId("imgAttachments").style.display = "none";
+    dojo.byId("imgComments").style.display = "block";
+    dojo.byId('imgDirections').src = "images/Details.png";
+    dojo.byId('imgDirections').title = "Details";
+    dojo.byId('imgDirections').setAttribute("disp", "Details");
+    dojo.byId("imgDirections").style.display = "block";
+    dojo.byId('divInfoAttachments').style.display = "block";
+    dojo.byId('divInfoDetails').style.display = "none";
+    dojo.byId('divInfoComments').style.display = "none";
+    SetAttachmentsHeight();
+}
+
+//Set height and create scrollbar for comments
+function SetCommentHeight() {
+    var height = dojo.coords(dojo.byId('divInfoContent')).h - 10;
+    if (height > 0) {
+        dojo.byId('divCommentsContent').style.height = (height - 70) + "px";
+    }
+    CreateScrollbar(dojo.byId("divCommentsContainer"), dojo.byId("divCommentsContent"));
+
+}
+
+//Reset the comments textarea
+function ResetTextArea() {
+    dojo.byId('txtComments').style.overflow = "hidden";
+    ResetCommentValues();
+}
+
+//Reset comments data
+function ResetCommentValues() {
+    dojo.byId('txtComments').value = '';
+    SetRating(dojo.byId('commentRating'), 0);
+    document.getElementById('spanCommentError').innerHTML = "";
+    document.getElementById('spanCommentError').style.display = 'none';
+    dojo.byId('divAddComment').style.display = "none";
+    dojo.byId('divCommentsView').style.display = "block";
+    dojo.byId('divCommentsList').style.display = "block";
+}
+
+//Display view to add comments
+function ShowAddCommentsView() {
+    dojo.byId('divAddComment').style.display = "block";
+    dojo.byId('divCommentsView').style.display = "none";
+    dojo.byId('divCommentsList').style.display = "none";
+    SetCmtControlsHeight();
+    setTimeout(function () {
+        dojo.byId('txtComments').focus();
+    }, 50);
+}
+
+//Show comments controls with scrollbar
+function SetCmtControlsHeight() {
+    var height = dojo.coords(dojo.byId('divInfoContent')).h;
+    dojo.byId("divCmtIpContainer").style.height = (height - 80) + "px";
+    dojo.byId('divCmtIpContent').style.height = (height - 80) + "px";
+    CreateScrollbar(dojo.byId("divCmtIpContainer"), dojo.byId("divCmtIpContent"));
+}
+
+//Restrict the maximum number of characters in the text area control
+function ImposeMaxLength(Object, MaxLen) {
+    return (Object.value.length <= MaxLen);
+}
+
+//function to hide Info request container
+function HideInformationContainer() {
+    map.getLayer(tempGraphicsLayerId).clear();
+    selectedGraphic = null;
+    featureID = null;
+    objectId = null;
+    alertLayerID = null;
+    passedId = null;
+    map.infoWindow.hide();
+}
+
+//Get the extent based on the map point for browser
+function GetBrowserMapExtent(mapPoint) {
+    var width = map.extent.getWidth();
+    var height = map.extent.getHeight();
+    var xmin = mapPoint.x - (width / 2);
+    var ymin = mapPoint.y - (height / 2.7);
+    var xmax = xmin + width;
+    var ymax = ymin + height;
+    return new esri.geometry.Extent(xmin, ymin, xmax, ymax, map.spatialReference);
+}

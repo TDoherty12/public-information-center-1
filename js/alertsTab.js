@@ -1,5 +1,5 @@
 ﻿/** @license
- | Version 10.1.1
+ | Version 10.2
  | Copyright 2012 Esri
  |
  | Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,11 @@
  | See the License for the specific language governing permissions and
  | limitations under the License.
  */
-var currentAccordianTab;    //variable to store currentAccrodian tab
-var accordianContainerHeight;   //variable to store accordion container height
-var storeAlertsLayerState;  //Variable to store current state of alerts
+var currentAccordianTab; //variable to store currentAccrodian tab
+var accordianContainerHeight; //variable to store accordion container height
+var storeAlertsLayerState; //Variable to store current state of alerts
 
-//function to add Alert layers
+//Add Alert layers
 function AddAlertLayersOnMap() {
     for (var index in alertLayerInfo) {
         var alertLayer = new esri.layers.FeatureLayer(alertLayerInfo[index].LayerURL, {
@@ -34,41 +34,40 @@ function AddAlertLayersOnMap() {
                 var filterDate = todayDate.setDate(todayDate.getDate() - alertLayerInfo[index].FilterDays);
                 filterDate = todayDate.getFullYear() + '/' + (todayDate.getMonth() + 1) + '/' + todayDate.getDate();
                 alertLayer.setDefinitionExpression(dojo.string.substitute(alertLayerInfo[index].DefinitionExpression, [filterDate]));
-            }
-            else {
+            } else {
                 alertLayer.setDefinitionExpression(alertLayerInfo[index].DefinitionExpression);
             }
         }
         map.addLayer(alertLayer);
 
-        dojo.connect(alertLayer, "onClick", function (evtArgs) {    //on click handler for layer to show infowindow
+        dojo.connect(alertLayer, "onClick", function (evtArgs) { //on click handler for layer to show infowindow
             var layerIndex = GetAlertsIndex(this.id);
             var graphic = evtArgs.graphic;
             var mapPoint;
             if (graphic.geometry.type == "point") {
                 mapPoint = graphic.geometry;
-            }
-            else {
+            } else {
                 mapPoint = evtArgs.mapPoint;
             }
-            ShowAlertsInfoWindow(alertLayerInfo[layerIndex].InfoWindowHeader, alertLayerInfo[layerIndex].InfoWindowFields, alertLayerInfo[layerIndex].InfoWindowSize, mapPoint, graphic.attributes);
+            ShowAlertsInfoWindow(alertLayerInfo[layerIndex].InfoWindowHeader, alertLayerInfo[layerIndex].InfoWindowFields, alertLayerInfo[layerIndex].InfoWindowSize, mapPoint, graphic.attributes, alertLayerInfo[layerIndex].Key);
         });
 
         dojo.connect(alertLayer, "onUpdateEnd", function (features) {
             var layerIndex = GetAlertsIndex(this.id);
 
-            var accordionTable = dojo.byId(alertLayerInfo[layerIndex].Key).getElementsByTagName("table");   //check data is already populated
+            var accordionTable = dojo.byId(alertLayerInfo[layerIndex].Key).getElementsByTagName("table"); //check data is already populated
             if (accordionTable.length > 0) {
                 return;
             }
 
             //checking first accordion content is populated
-            if (alertLayerInfo[defaultAlertServicePanel].Key == this.id) {
-                dojo.byId("divAccordianImage" + this.id).className = "accordionExpand";
-                HideLoadingMessage();
+            if (defaultAlertServicePanel) {
+                if (alertLayerInfo[defaultAlertServicePanel].Key == this.id) {
+                    dojo.byId("divAccordianImage" + this.id).className = "accordionExpand";
+                    HideProgressIndicator();
+                }
             }
-
-            RemoveChildren(dojo.byId(alertLayerInfo[layerIndex].Key + "Content"));  //Removing the existing data
+            RemoveChildren(dojo.byId(alertLayerInfo[layerIndex].Key + "Content")); //Removing the existing data
             var layer = map.getLayer(this.id);
             AddLegendItem(layer, layerIndex, alertLayerInfo[layerIndex].isLayerVisible, "tableAlertsLegend");
             var table = document.createElement("table");
@@ -78,29 +77,28 @@ function AddAlertLayersOnMap() {
             for (var index in layer.graphics) {
                 var graphic = layer.graphics[index];
                 var tr = document.createElement("tr");
-                tr.onmouseover = function () {  //functionality for mouse over
+                tr.onmouseover = function () { //functionality for mouse over
                     var rowIndex = this.rowIndex;
                     var graphic = layer.graphics[rowIndex]; //get the graphic from the list
-                    if (graphic.geometry.type == "point") {     //if geometry is point
+                    if (graphic.geometry.type == "point") { //if geometry is point
                         HighlightFeature(graphic.geometry, alertLayerInfo[layerIndex].RippleColor);
-                    }
-                    else {      //if geometry is not point
+                    } else { //if geometry is not point
                         var shadowBorderColor = new dojo.Color(alertLayerInfo[layerIndex].RippleColor);
                         shadowBorderColor.a = 0.4;
                         var borderSymbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID,
-                                             new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID,
-                                             shadowBorderColor, 8), new dojo.Color([0, 0, 0, 0]));
+                        new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID,
+                        shadowBorderColor, 8), new dojo.Color([0, 0, 0, 0]));
                         var currentPrecientGraphicShadow = new esri.Graphic(graphic.geometry, borderSymbol, null, null);
                         map.getLayer(tempPolygonSelectLayerId).add(currentPrecientGraphicShadow);
                     }
                     this.className = "trRowHighlight";
                 }
-                tr.onmouseout = function () {   //function for mouse over
+                tr.onmouseout = function () { //function for mouse over
                     HideRipple();
                     map.getLayer(tempPolygonSelectLayerId).clear();
                     this.className = "trRowDefault";
                 }
-                tr.onclick = function () {  //function for row click event
+                tr.onclick = function () { //function for row click event
                     map.infoWindow.hide();
                     var rowIndex = this.rowIndex;
                     var graphic = layer.graphics[rowIndex];
@@ -108,17 +106,16 @@ function AddAlertLayersOnMap() {
                     if (graphic.geometry.type == "point") {
                         mapPoint = graphic.geometry;
                         map.centerAndZoom(mapPoint, map._slider.maximum - 2);
-                    }
-                    else {
-                        mapPoint = graphic.geometry.getExtent().getCenter();   //get the center of the polygon
-                        if (!graphic.geometry.contains(mapPoint)) {       //check center is inside the polygon or take the first point of geometry
+                    } else {
+                        mapPoint = graphic.geometry.getExtent().getCenter(); //get the center of the polygon
+                        if (!graphic.geometry.contains(mapPoint)) { //check center is inside the polygon or take the first point of geometry
                             mapPoint = graphic.geometry.getPoint(0, 0);
                         }
                         map.setExtent(graphic.geometry.getExtent().expand(4));
                     }
                     //workaround for setting infowindow position
                     setTimeout(function () {
-                        ShowAlertsInfoWindow(alertLayerInfo[layerIndex].InfoWindowHeader, alertLayerInfo[layerIndex].InfoWindowFields, alertLayerInfo[layerIndex].InfoWindowSize, mapPoint, graphic.attributes);
+                        ShowAlertsInfoWindow(alertLayerInfo[layerIndex].InfoWindowHeader, alertLayerInfo[layerIndex].InfoWindowFields, alertLayerInfo[layerIndex].InfoWindowSize, mapPoint, graphic.attributes, alertLayerInfo[layerIndex].Key);
                     }, 1000);
                 }
                 tr.className = "trRowDefault";
@@ -126,14 +123,14 @@ function AddAlertLayersOnMap() {
                 td.className = "tdBottomRowSeperator";
 
                 if (!alertLayerInfo[layerIndex].isDateConverted) {
-                    //var attributes = graphic.attributes;
                     for (var i in graphic.attributes) {
                         if (!graphic.attributes[i]) {
                             graphic.attributes[i] = showNullValueAs;
                         }
                     }
+
                     var dateFields = alertLayerInfo[layerIndex].DateFields.split(",");
-                    for (var j = 0; j < dateFields.length; j++) {   //check for date type attributes and format date
+                    for (var j = 0; j < dateFields.length; j++) { //check for date type attributes and format date
                         if (graphic.attributes[dateFields[j]]) {
                             var timeStamp = graphic.attributes[dateFields[j]];
                             var date = new js.date();
@@ -142,7 +139,6 @@ function AddAlertLayersOnMap() {
                             graphic.attributes[dateFields[j]] = date.utcTimestampFromMs(utcMilliseconds).toDateString();
                         }
                     }
-
                 }
 
                 td.innerHTML = dojo.string.substitute(alertLayerInfo[layerIndex].ListViewFormat, graphic.attributes);
@@ -156,7 +152,7 @@ function AddAlertLayersOnMap() {
     }
 }
 
-//function to create accordion control for Alert layers
+//Create accordion control for Alert layers
 function CreateAccordian(accordionContainer, layerInfo) {
     for (var index in layerInfo) {
         var divHeaderContainer = document.createElement("div");
@@ -169,6 +165,7 @@ function CreateAccordian(accordionContainer, layerInfo) {
         divAccordionTitle.setAttribute("childContentId", layerInfo[index].Key);
         divAccordionTitle.onclick = function () {
             map.infoWindow.hide();
+            selectedGraphic = null;
             ShowAccordianTab(this.getAttribute("childContentId"));
         }
 
@@ -198,20 +195,23 @@ function CreateAccordian(accordionContainer, layerInfo) {
         tr.appendChild(td2);
         accordianTBody.appendChild(tr);
         var td1 = document.createElement("td");
-        var chkBox = CreateCheckBox("chk" + layerInfo[index].Key, layerInfo[index].Key, layerInfo[index].isLayerVisible)
+        var chkBox = CreateCheckBox("chk" + layerInfo[index].Key, layerInfo[index].Key, layerInfo[index].isLayerVisible);
+
         chkBox.onclick = function (e) {
-            map.infoWindow.hide();  //hide infowindow if shown
+            map.infoWindow.hide(); //hide infowindow if shown
             var divLegend = dojo.byId("divAlertsLegend");
             var legendRows = dojo.query('[layerID="' + this.value + '"]', divLegend);
             if (this.checked) {
-                dojo.byId('divAlertsLegend').style.display = 'block';
                 map.getLayer(this.value).show();
+                divLegend.style.display = 'block';
                 legendRows[0].style.display = "block";
-            }
-            else {
+                ShowAccordianTab(this.value);
+
+            } else {
                 map.getLayer(this.value).hide();
                 legendRows[0].style.display = "none";
                 HideAccordianTab(this.value);
+                selectedGraphic = null;
                 var counter = 0;
                 dojo.query('[layerID]', divLegend).forEach(function (node, index, arr) {
                     if (node.style.display == 'none') {
@@ -253,6 +253,7 @@ function CreateAccordian(accordionContainer, layerInfo) {
     }
 }
 
+//Displays the accordion tab on click of checkbox or accordion header
 function ShowAccordianTab(accordianId) {
     var chkBox = dojo.byId('chk' + accordianId);
     if (!dojo.byId('chk' + accordianId).checked) {
@@ -268,25 +269,46 @@ function ShowAccordianTab(accordianId) {
         return;
     }
     var combinedAnimation;
-    var openContent = dojo.animateProperty({ node: dojo.byId(accordianId), duration: 500, properties: { height: { end: accordianContainerHeight, unit: "px"}} });
-    var closeContent = dojo.animateProperty({ node: dojo.byId(currentAccordianTab), duration: 500, properties: { height: { end: 0, unit: "px"}} });
+    var openContent = dojo.animateProperty({
+        node: dojo.byId(accordianId),
+        duration: 500,
+        properties: {
+            height: {
+                end: accordianContainerHeight,
+                unit: "px"
+            }
+        }
+    });
+    var closeContent = dojo.animateProperty({
+        node: dojo.byId(currentAccordianTab),
+        duration: 500,
+        properties: {
+            height: {
+                end: 0,
+                unit: "px"
+            }
+        }
+    });
     if (currentAccordianTab == "") {
         combinedAnimation = openContent;
         currentAccordianTab = accordianId;
         dojo.connect(combinedAnimation, "onEnd", function () {
-            dojo.byId(currentAccordianTab + "Content").style.height = accordianContainerHeight + "px";
-            CreateScrollbar(dojo.byId(currentAccordianTab), dojo.byId(currentAccordianTab + "Content"));
-            dojo.byId("divAccordianImage" + currentAccordianTab).className = "accordionExpand";
+            if (dojo.byId(currentAccordianTab + "Content")) {
+                dojo.byId(currentAccordianTab + "Content").style.height = accordianContainerHeight + "px";
+                CreateScrollbar(dojo.byId(currentAccordianTab), dojo.byId(currentAccordianTab + "Content"));
+                dojo.byId("divAccordianImage" + currentAccordianTab).className = "accordionExpand";
+            }
         });
-    }
-    else {
+    } else {
         combinedAnimation = dojo.fx.combine([openContent, closeContent]);
         dojo.connect(combinedAnimation, "onEnd", function () {
-            dojo.byId(currentAccordianTab).style.display = 'none';
-            currentAccordianTab = accordianId;
-            dojo.byId(currentAccordianTab + "Content").style.height = accordianContainerHeight + "px";
-            CreateScrollbar(dojo.byId(currentAccordianTab), dojo.byId(currentAccordianTab + "Content"));
-            dojo.byId("divAccordianImage" + currentAccordianTab).className = "accordionExpand";
+            if (dojo.byId(currentAccordianTab)) {
+                dojo.byId(currentAccordianTab).style.display = 'none';
+                currentAccordianTab = accordianId;
+                dojo.byId(currentAccordianTab + "Content").style.height = accordianContainerHeight + "px";
+                CreateScrollbar(dojo.byId(currentAccordianTab), dojo.byId(currentAccordianTab + "Content"));
+                dojo.byId("divAccordianImage" + currentAccordianTab).className = "accordionExpand";
+            }
         });
     }
     dojo.byId("divAccordianImage" + currentAccordianTab).className = "accordionCollapse";
@@ -294,20 +316,31 @@ function ShowAccordianTab(accordianId) {
     combinedAnimation.play();
 }
 
-//function to close accordion tab
+//Close accordion tab
 function HideAccordianTab(accordianId) {
-    var closeContent = dojo.animateProperty({ node: dojo.byId(accordianId), duration: 500, properties: { height: { end: 0, unit: "px"}} });
+    var closeContent = dojo.animateProperty({
+        node: dojo.byId(accordianId),
+        duration: 500,
+        properties: {
+            height: {
+                end: 0,
+                unit: "px"
+            }
+        }
+    });
     dojo.byId("divAccordianImage" + accordianId).className = "accordionCollapse";
     closeContent.play();
     dojo.connect(closeContent, "onEnd", function () {
-        dojo.byId(accordianId).style.display = 'none';
-        if (currentAccordianTab == accordianId) {
-            currentAccordianTab = "";
+        if (dojo.byId(accordianId)) {
+            dojo.byId(accordianId).style.display = 'none';
+            if (currentAccordianTab == accordianId) {
+                currentAccordianTab = "";
+            }
         }
     });
 }
 
-//function to set accordion container height
+//Set accordion container height
 function SetAccordionContainerHeight(accordionContainerID) {
     //to calculate the accordion container height based on no of accordion tabs and available screen resolution.
     var tabHeaderHeight = dojo.coords(dojo.byId("divServiceTabContainer-header")).h;
@@ -322,7 +355,7 @@ function SetAccordionContainerHeight(accordionContainerID) {
     var tabConainer = dojo.coords(dojo.byId("divLeftPanelBackground"));
 
     accordianContainerHeight = (tabConainer.h - (tabHeaderHeight + instructionHeight + tabConainer.t + (alertLayerInfo.length * 30))) - 25;
-    if (accordianContainerHeight < 40) {    //Setting minimum height for accordion container
+    if (accordianContainerHeight < 40) { //Setting minimum height for accordion container
         accordianContainerHeight = 40;
     }
     if (accordionContainerID != "") {
@@ -331,7 +364,7 @@ function SetAccordionContainerHeight(accordionContainerID) {
     }
 }
 
-//function to return index of alerts layer info
+//Return index of alerts layer info
 function GetAlertsIndex(alertId) {
     for (var index in alertLayerInfo) {
         if (alertLayerInfo[index].Key == alertId) {
@@ -340,7 +373,7 @@ function GetAlertsIndex(alertId) {
     }
 }
 
-//function to add legend item to table
+//Add legend item to table
 function AddLegendItem(layer, layerIndex, isVisible) {
     var table = document.createElement("table");
     dojo.byId('divAlertsLegend').appendChild(table);
@@ -356,7 +389,11 @@ function AddLegendItem(layer, layerIndex, isVisible) {
             for (var i = 0; i < layer.renderer.infos.length; i++) {
                 var tr = table.insertRow(0);
                 var td = document.createElement("td");
-                var image = CreateImage(layer.renderer.infos[i].symbol.url, "", false, layer.renderer.infos[i].symbol.width, layer.renderer.infos[i].symbol.height);
+                if (layer.renderer.infos[i].symbol.url) {
+                    var image = CreateImage(layer.renderer.infos[i].symbol.url, "", false, layer.renderer.infos[i].symbol.width, layer.renderer.infos[i].symbol.height);
+                } else {
+                    var image = CreateCircleElement(layer.renderer.infos[i].symbol.color.toHex(), layer.renderer.infos[i].symbol.size, layer.renderer.infos[i].symbol.outline.color.toHex());
+                }
                 td.appendChild(image);
                 td.vAlign = "middle";
                 tr.appendChild(td);
@@ -365,11 +402,14 @@ function AddLegendItem(layer, layerIndex, isVisible) {
                 td1.vAlign = "middle";
                 tr.appendChild(td1);
             }
-        }
-        else {
+        } else {
             var tr = table.insertRow(0);
             var td = document.createElement("td");
-            var image = CreateImage(layer.renderer.symbol.url, "", false, layer.renderer.symbol.width, layer.renderer.symbol.height);
+            if (layer.renderer.symbol.url) {
+                var image = CreateImage(layer.renderer.symbol.url, "", false, layer.renderer.symbol.width, layer.renderer.symbol.height);
+            } else {
+                var image = CreateDivElement(layer.renderer.symbol.color.toHex(), 20, 20, layer.renderer.symbol.outline.color.toHex());
+            }
             td.appendChild(image);
             td.vAlign = "middle";
             tr.appendChild(td);
@@ -378,8 +418,7 @@ function AddLegendItem(layer, layerIndex, isVisible) {
             td1.vAlign = "middle";
             tr.appendChild(td1);
         }
-    }
-    else {
+    } else {
         var tr = table.insertRow(0); ;
         var td = document.createElement("td");
         var div = CreateDivElement(layer.renderer.symbol.color.toHex(), 20, 20, layer.renderer.symbol.outline.color.toHex());
@@ -393,7 +432,7 @@ function AddLegendItem(layer, layerIndex, isVisible) {
     }
 }
 
-//function to create div element
+//Create div element
 function CreateDivElement(fillColor, width, height, borderColor) {
     var div = document.createElement("div");
     div.style.width = width + "px";
@@ -403,46 +442,78 @@ function CreateDivElement(fillColor, width, height, borderColor) {
     return div;
 }
 
-//function to show infowindow
-function ShowAlertsInfoWindow(infoWindowTitle, infoWindowContent, infoWindowSize, mapPoint, attributes) {
-    map.infoWindow.setTitle(dojo.string.substitute(infoWindowTitle, attributes));
-    for (i in attributes) {
-        if (attributes[i] == null)
-            attributes[i] = showNullValueAs;
-    }
-    var infoWindowContent = CreateInfoWindowContent(dojo.string.substitute(infoWindowContent, attributes));
-    map.infoWindow.setContent(infoWindowContent);
-
-    var windowPoint = map.toScreen(mapPoint);
-    infoWindowSize = infoWindowSize.split(",");
-    map.infoWindow.resize(Number(infoWindowSize[0]), Number(infoWindowSize[1]));
-    //var anchorPoint = GetInfoWindowAnchor(windowPoint, Number(infoWindowSize[0]));
-    map.infoWindow.show(windowPoint, GetInfoWindowAnchor(windowPoint, Number(infoWindowSize[0])));
-
+//Create circle element
+function CreateCircleElement(fillColor, radius, borderColor) {
+    var div = document.createElement("div");
+    div.style.width = "22px";
+    div.style.height = "22px";
+    var surface = dojox.gfx.createSurface(div, 22, 22);
+    var group = surface.createGroup();
+    var circle = group.createCircle({
+        cx: 10,
+        cy: 10,
+        r: radius
+    });
+    circle.setFill(fillColor);
+    circle.setStroke(borderColor);
+    return div;
 }
 
-//function to create infowindow content
+//Show infowindow
+function ShowAlertsInfoWindow(infoWindowTitle, infoWindowContent, infoWindowSize, mapPoint, attributes, key) {
+    alertLayerID = key;
+    objectId = attributes[map.getLayer(key).objectIdField];
+    map.infoWindow.hide();
+    map.setExtent(GetBrowserMapExtent(mapPoint));
+    var divInfoDetails = dojo.byId('tblInfoWindowDetails');
+    RemoveScrollBar(dojo.byId('divInfoDetails'));
+    selectedGraphic = mapPoint;
+    for (i in attributes) {
+        if (attributes[i] == null) attributes[i] = showNullValueAs;
+    }
+    dojo.byId('divInfoWindowContent').style.display = "none";
+    dojo.byId('divSocialInfoContent').style.display = "none";
+    dojo.byId('divInfoContent').style.display = "none";
+    var tdTitle = dojo.byId('tdTitle');
+    tdTitle.innerHTML = dojo.string.substitute(infoWindowTitle, attributes);
+    var infoWindowContent = CreateInfoWindowContent(dojo.string.substitute(infoWindowContent, attributes));
+    divInfoDetails.appendChild(infoWindowContent);
+
+    var screenPoint = map.toScreen(mapPoint);
+    screenPoint.y = map.height - screenPoint.y;
+    infoWindowSize = infoWindowSize.split(",");
+    map.infoWindow.resize(Number(infoWindowSize[0]), Number(infoWindowSize[1]));
+    map.infoWindow.show(screenPoint);
+    dojo.byId('divInfoWindowContent').style.display = "block";
+    dojo.byId('divInfoWindowContent').style.height = "100%";
+    SetAlertDetailsHeight();
+}
+
+//Create infowindow content
 function CreateInfoWindowContent(infowindowContent) {
-    var table = document.createElement("table");
+    RemoveChildren(dojo.byId('tblInfoWindowDetails'));
     var tbody = document.createElement("tbody");
-    table.appendChild(tbody);
     infowindowContent = infowindowContent.split(",");
     for (var index in infowindowContent) {
         var data = infowindowContent[index].split(":");
         var tr = document.createElement("tr");
         var td = document.createElement("td");
         td.innerHTML = data[0] + ":";
+        td.style.height = "18px";
+        td.style.width = "45%";
+        td.vAlign = "middle";
+        td.style.paddingTop = "5px";
         var td1 = document.createElement("td");
         td1.innerHTML = data[1];
+        td1.style.paddingTop = "5px";
         tr.appendChild(td);
         tr.appendChild(td1);
         tbody.appendChild(tr);
     }
-
-    return table;
+    return tbody;
 }
 
-//function to store Alert Layer States
+//Store Alert Layer States
 function SaveAlertState() {
     dojo.byId('divAlertsLegend').style.display = 'none';
     storeAlertsLayerState = [];
@@ -453,7 +524,7 @@ function SaveAlertState() {
     }
 }
 
-//function to restore Alert Layer State
+//Restore Alert Layer State
 function RestoreAlertLayers() {
     for (var key in storeAlertsLayerState) {
         if (storeAlertsLayerState[key]) {

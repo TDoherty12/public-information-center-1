@@ -1,5 +1,5 @@
 ﻿/** @license
- | Version 10.1.1
+ | Version 10.2
  | Copyright 2012 Esri
  |
  | Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,10 @@
  | limitations under the License.
  */
 var arrFeeds = [];
+var point;
+var glayer;
 
-//function to create socialmedia items
+//Create socialmedia items
 function CreateSocialMediaItems() {
     var tableSocialMedia = dojo.byId('tableSocialServiceMedia');
     for (var index in socialMediaInfo) {
@@ -24,40 +26,27 @@ function CreateSocialMediaItems() {
     }
 }
 
+//Create socialmedia content
 function CreateSocialMediaContent(tableSocialMedia, index) {
     var tr = tableSocialMedia.insertRow(index);
     var td1 = document.createElement("td");
     var td2 = document.createElement("td");
     var td3 = document.createElement("td");
-
-    var chkBox = CreateCheckBox("chk" + socialMediaInfo[index].Key, socialMediaInfo[index].DisplayText, false)
+    var chkBoxState = (dojo.indexOf(socialMediaIndex, socialMediaInfo[index].Key) > -1) ? true : false;
+    var chkBox = CreateCheckBox("chk" + socialMediaInfo[index].Key, socialMediaInfo[index].DisplayText, chkBoxState)
+    dojo.attr(chkBox, "feedKey", socialMediaInfo[index].Key);
     chkBox.onclick = function (e) {
         map.infoWindow.hide();
         if (this.checked) {
-            var socialMediaIndex = GetSocialMediaLayerIndex(this.value);
+            FetchMediaFeed(this.value);
             td3.style.cursor = "pointer";
-            arrFeeds.push(this.value);
-            dojo.byId('spanLoadingMessage').innerHTML = "Fetching feeds: " + arrFeeds.join(",");
-            dojo.byId('tableSocialMediaStatus').style.display = "block";
-            if (socialMediaInfo[socialMediaIndex].requireGeometry) {
-                var outSR = new esri.SpatialReference({ wkid: 4326 });
-                geometryService.project([map.extent.getCenter()], outSR, function (points) {
-                    var projectedPoint = points[0];
-                    FetchSocialMediaFeed(projectedPoint, socialMediaIndex);
-                });
-            }
-            else {
-                FetchSocialMediaFeed(null, socialMediaIndex);
-            }
-        }
-        else {
+        } else {
             var i = ElementIndexOf(arrFeeds, this.value);
             if (i != -1) arrFeeds.splice(i, 1);
             if (arrFeeds.length > 0) {
                 dojo.byId('spanLoadingMessage').innerHTML = "Fetching feeds: " + arrFeeds.join(",");
                 dojo.byId('tableSocialMediaStatus').style.display = "block";
-            }
-            else {
+            } else {
                 dojo.byId('tableSocialMediaStatus').style.display = "none";
                 td3.style.cursor = "default";
             }
@@ -83,31 +72,63 @@ function CreateSocialMediaContent(tableSocialMedia, index) {
     tr.appendChild(td3);
 
     CreateGraphicsLayer(socialMediaInfo[index].Key, socialMediaInfo[index].DisplayText);
+    if (chkBoxState) {
+        FetchMediaFeed(socialMediaInfo[index].DisplayText);
+    }
+}
+
+//Fetch social media feeds on check
+function FetchMediaFeed(value) {
+    var socialMediaIndex = GetSocialMediaLayerIndex(value);
+    arrFeeds.push(value);
+    dojo.byId('spanLoadingMessage').innerHTML = "Fetching feeds: " + arrFeeds.join(",");
+    dojo.byId('tableSocialMediaStatus').style.display = "block";
+    if (socialMediaInfo[socialMediaIndex].requireGeometry) {
+        var outSR = new esri.SpatialReference({
+            wkid: 4326
+        });
+        geometryService.project([map.extent.getCenter()], outSR, function (points) {
+            var projectedPoint = points[0];
+            FetchSocialMediaFeed(projectedPoint, socialMediaIndex);
+        });
+    } else {
+        FetchSocialMediaFeed(null, socialMediaIndex);
+    }
 }
 
 //function to create graphics layer
-function CreateGraphicsLayer(id, value) {
-    var glayer = new esri.layers.GraphicsLayer();
-    glayer.id = id;
+function CreateGraphicsLayer(socialid, value) {
+    glayer = new esri.layers.GraphicsLayer();
+    glayer.id = socialid;
     map.addLayer(glayer);
     glayer.hide();
-
     dojo.connect(glayer, "onClick", function (evt) {
         var layerIndex = GetSocialMediaLayerIndex(value);
-        map.infoWindow.setTitle(evt.graphic.attributes.TITLE);
+        map.infoWindow.hide();
+        map.setExtent(GetBrowserMapExtent(evt.mapPoint));
+        dojo.byId('divInfoWindowContent').style.display = "none";
+        dojo.byId('divInfoContent').style.display = "none";
+        dojo.byId('divSocialInfoContent').style.display = "none";
+        var tdSocialTitle = dojo.byId('tdSocialTitle');
+        tdSocialTitle.innerHTML = dojo.string.substitute(socialMediaTitle, evt.graphic.attributes);
         var infoWindowSize = socialMediaInfo[layerIndex].InfoWindowSize.split(",");
         map.infoWindow.resize(Number(infoWindowSize[0]), Number(infoWindowSize[1]));
         if (socialMediaInfo[layerIndex].CheckHyperLinks) {
-            map.infoWindow.setContent(replaceURLWithLinks(dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, evt.graphic.attributes)));
+            dojo.byId('divSocialInfoDetails').innerHTML = replaceURLWithLinks(dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, evt.graphic.attributes));
+        } else {
+            dojo.byId('divSocialInfoDetails').innerHTML = dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, evt.graphic.attributes);
         }
-        else {
-            map.infoWindow.setContent(dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, evt.graphic.attributes));
-        }
-        map.infoWindow.show(evt.screenPoint, GetInfoWindowAnchor(evt.screenPoint, Number(infoWindowSize[0])));
+        socialLayerID = layerIndex;
+        feedID = evt.graphic.attributes.ID;
+        selectedGraphic = evt.graphic.geometry;
+        var screenPoint = map.toScreen(selectedGraphic);
+        screenPoint.y = map.height - screenPoint.y;
+        map.infoWindow.show(screenPoint);
+        dojo.byId('divSocialInfoContent').style.display = "block";
     });
 }
 
-//function to get index for selected layer
+//Get index for selected layer
 function GetSocialMediaLayerIndex(value) {
     for (var index in socialMediaInfo) {
         if (socialMediaInfo[index].DisplayText == value) {
@@ -116,7 +137,7 @@ function GetSocialMediaLayerIndex(value) {
     }
 }
 
-//function to hide and clear social media layers
+//Hide and clear social media layers
 function ClearHideSocialMediaLayers() {
     for (var index in socialMediaInfo) {
         dojo.byId("span" + socialMediaInfo[index].Key).innerHTML = "";
@@ -126,9 +147,11 @@ function ClearHideSocialMediaLayers() {
     }
 }
 
-//function to update social media feeds
+//Update social media feeds
 function UpdateSocialMediaFeeds(ctl) {
     map.infoWindow.hide();
+    selectedGraphic = null;
+    shareSelectedRb = ctl.id;
     for (var i = 0; i < socialMediaInfo.length; i++) {
         if (dojo.byId("chk" + socialMediaInfo[i].Key).checked) {
             if (dojo.indexOf(arrFeeds, dojo.byId("chk" + socialMediaInfo[i].Key).value) == -1) {
@@ -141,40 +164,36 @@ function UpdateSocialMediaFeeds(ctl) {
     }
 }
 
-//function to refresh fetch social media feeds
+//Reload SocialMedia feeds
 function ReloadSocialMediaFeeds(index) {
-    dojo.byId('rbShowAllFeeds').checked;
     if (socialMediaInfo[index].requireGeometry) {
-        var outSR = new esri.SpatialReference({ wkid: 4326 });
+        var outSR = new esri.SpatialReference({
+            wkid: 4326
+        });
         geometryService.project([map.extent.getCenter()], outSR, function (points) {
             var projectedPoint = points[0];
             FetchSocialMediaFeed(projectedPoint, index);
         });
-    }
-    else {
+    } else {
         FetchSocialMediaFeed(null, index);
     }
 }
 
-//function to fetch SocialMedia feeds
+//Fetch SocialMedia feeds
 function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
-
     map.getLayer(socialMediaInfo[socialMediaIndex].Key).clear();
     map.getLayer(socialMediaInfo[socialMediaIndex].Key).show();
 
     if (socialMediaInfo[socialMediaIndex].UseUTCDate) {
         if (dojo.byId('rbShowAllFeeds').checked) {
             socialMediaAttributes["TIME"] = GetUTCDate(socialMediaInfo[socialMediaIndex].MonthRangeDays, socialMediaInfo[socialMediaIndex].DateFormat);
-        }
-        else {
+        } else {
             socialMediaAttributes["TIME"] = GetUTCDate(1, socialMediaInfo[socialMediaIndex].DateFormat);
         }
-    }
-    else {
+    } else {
         if (dojo.byId('rbShowAllFeeds').checked) {
             socialMediaAttributes["TIME"] = socialMediaInfo[socialMediaIndex].MonthRangeKey;
-        }
-        else {
+        } else {
             socialMediaAttributes["TIME"] = socialMediaInfo[socialMediaIndex].DayRangeKey;
         }
     }
@@ -188,12 +207,15 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
 
     esri.request({
         url: requestURL,
+        handleAs: "json",
+        callbackParamName: (socialMediaInfo[socialMediaIndex].CallBackParamName) ? socialMediaInfo[socialMediaIndex].CallBackParamName : "",
         load: function (results) {
             var items = socialMediaInfo[socialMediaIndex].FeedAttribute.split(".");
             var data = results;
-
             var graphicAttributes = [];
-            var graphicCollection = new esri.geometry.Multipoint(new esri.SpatialReference({ wkid: 4326 }));
+            var graphicCollection = new esri.geometry.Multipoint(new esri.SpatialReference({
+                wkid: 4326
+            }));
 
             for (var i = 0; i < items.length; i++) {
                 data = data[items[i]];
@@ -203,6 +225,7 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                     var title = data[i];
                     var content = data[i];
                     var point = data[i];
+                    var id = data[i];
 
                     if (socialMediaInfo[socialMediaIndex].CheckValidFeed) {
                         if (!title[socialMediaInfo[socialMediaIndex].CheckValidFeed]) {
@@ -225,29 +248,53 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                         title = title[attr[x]];
                     }
 
+                    attr = socialMediaInfo[socialMediaIndex].FeedID.split(".");
+                    for (var x = 0; x < attr.length; x++) {
+                        if (socialMediaInfo[socialMediaIndex].Key == "yt") {
+                            id = data[i].id.$t.split("video:")[1];
+                        }
+                        else {
+                            id = id[attr[x]];
+                        }
+                    }
+
                     if (socialMediaInfo[socialMediaIndex].FeedLocationSplit) {
                         var attr = socialMediaInfo[socialMediaIndex].FeedLocation.split(".");
                         for (var x = 0; x < attr.length; x++) {
-                            point = point[attr[x]];
+                            if (point[attr[x]]) {
+                                point = point[attr[x]];
+                            }
                         }
                         if (!point) {
                             continue;
                         }
-                        point = point.split(socialMediaInfo[socialMediaIndex].FeedLocationSplit);
-                        if (point.length == 2) {
-                            var lat = point[1].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
-                            var long = point[0].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
+                        else {
+                            if (socialMediaInfo[socialMediaIndex].Key == "tw") {
+                                if (point.length == 2) {
+                                    var lat = point[0];
+                                    var long = point[1];
+                                }
+                            }
+                            else {
+                                point = point.split(socialMediaInfo[socialMediaIndex].FeedLocationSplit);
+                                if (point.length == 2) {
+                                    var lat = point[0].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
+                                    var long = point[1].replace(/[^0-9\\.\-]/g, '').replace(/^(\d*\.\d*)\..*$/, "$1");
+                                }
+                            }
                             if (!(isNaN(lat) || isNaN(long)) && lat != "" && long != "") {
-                                var point = new esri.geometry.Point(Number(long), Number(lat), new esri.SpatialReference({ wkid: 4326 }));
+                                point = new esri.geometry.Point(Number(long), Number(lat), new esri.SpatialReference({
+                                    wkid: 4326
+                                }));
                                 graphicCollection.addPoint(point);
                                 graphicAttributes.push({
                                     CONTENT: content,
-                                    TITLE: title
+                                    TITLE: title,
+                                    ID: id
                                 });
                             }
                         }
-                    }
-                    else {
+                    } else {
                         var lat = data[i];
                         var long = data[i];
 
@@ -261,11 +308,14 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                             long = long[temp[x]];
                         }
 
-                        var point = new esri.geometry.Point(Number(long), Number(lat), new esri.SpatialReference({ wkid: 4326 }));
+                        var point = new esri.geometry.Point(Number(long), Number(lat), new esri.SpatialReference({
+                            wkid: 4326
+                        }));
                         graphicCollection.addPoint(point);
                         graphicAttributes.push({
                             CONTENT: content,
-                            TITLE: title
+                            TITLE: title,
+                            ID: id
                         });
                     }
                 }
@@ -282,10 +332,42 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                             pointCounter++;
                             var graphic = new esri.Graphic(projectedPoints[0].getPoint(i), symbol, graphicAttributes[i], null);
                             map.getLayer(socialMediaInfo[socialMediaIndex].Key).add(graphic);
+
+                            if (graphic.attributes.ID == passedId) {
+                                var layerIndex = socialMediaIndex;
+                                map.infoWindow.hide();
+                                map.setExtent(GetBrowserMapExtent(point));
+                                selectedGraphic = point;
+                                dojo.byId('divInfoWindowContent').style.display = "none";
+                                dojo.byId('divInfoContent').style.display = "none";
+                                dojo.byId('divSocialInfoContent').style.display = "none";
+                                var tdSocialTitle = dojo.byId('tdSocialTitle');
+                                for (var j = 0; j < map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics.length; j++) {
+                                    if (map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes.ID == passedId) {
+                                        tdSocialTitle.innerHTML = dojo.string.substitute(socialMediaTitle, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes);
+                                        var infoWindowSize = socialMediaInfo[layerIndex].InfoWindowSize.split(",");
+                                        map.infoWindow.resize(Number(infoWindowSize[0]), Number(infoWindowSize[1]));
+                                        if (socialMediaInfo[layerIndex].CheckHyperLinks) {
+                                            dojo.byId('divSocialInfoDetails').innerHTML = replaceURLWithLinks(dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes));
+                                        } else {
+                                            dojo.byId('divSocialInfoDetails').innerHTML = dojo.string.substitute(socialMediaInfo[layerIndex].InfoWindowTemplate, map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes);
+                                        }
+                                        socialLayerID = layerIndex;
+                                        feedID = map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics[j].attributes.ID;
+                                        break;
+                                    }
+                                }
+
+                                screenPoint = map.toScreen(point);
+                                screenPoint.y = map.height - screenPoint.y;
+                                map.infoWindow.show(screenPoint);
+                                dojo.byId('divSocialInfoContent').style.display = "block";
+                            }
                             multiPoint.addPoint(projectedPoints[0].getPoint(i));
                         }
                     }
-                    dojo.byId("span" + socialMediaInfo[socialMediaIndex].Key).innerHTML = "&nbsp;(" + pointCounter + ")";
+
+                    dojo.byId("span" + socialMediaInfo[socialMediaIndex].Key).innerHTML = " (" + pointCounter + ")";
                 }
                 dojo.byId("td" + socialMediaInfo[socialMediaIndex].Key).onclick = function () {
                     if (map.getLayer(socialMediaInfo[socialMediaIndex].Key).graphics.length > 0) {
@@ -299,8 +381,7 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
                 if (arrFeeds.length > 0) {
                     dojo.byId('spanLoadingMessage').innerHTML = "Fetching feeds: " + arrFeeds.join(",");
                     dojo.byId('tableSocialMediaStatus').style.display = "block";
-                }
-                else {
+                } else {
                     dojo.byId('tableSocialMediaStatus').style.display = "none";
                 }
             });
@@ -312,23 +393,21 @@ function FetchSocialMediaFeed(projectedPoint, socialMediaIndex) {
             if (arrFeeds.length > 0) {
                 dojo.byId('spanLoadingMessage').innerHTML = "Fetching feeds: " + arrFeeds.join(",");
                 dojo.byId('tableSocialMediaStatus').style.display = "block";
-            }
-            else {
+            } else {
                 dojo.byId('tableSocialMediaStatus').style.display = "none";
 
 
             }
             dojo.byId("span" + socialMediaInfo[socialMediaIndex].Key).innerHTML = "";
             if (dojo.byId('chk' + socialMediaInfo[socialMediaIndex].Key).checked) {
-                ShowDialog('Error',
-                    messages.getElementsByTagName("feedError")[0].childNodes[0].nodeValue
-                    + "<br>" + error.message);
+                alert("An error occurred while fetching " + socialMediaInfo[socialMediaIndex].DisplayText + " feed.");
             }
         }
     });
 }
 
+//Replace URL with links
 function replaceURLWithLinks(stuff) {
     var reg_exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/i;
-    return stuff.replace(reg_exp, "<a href='$1' target='_blank'>$1</a>");
+    return stuff.replace(reg_exp, "<a style='color:white' href='$1' target='_blank'>$1</a>");
 }
