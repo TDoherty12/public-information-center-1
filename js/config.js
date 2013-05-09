@@ -73,7 +73,7 @@ dojo.declare("js.config", null, {
     }],
 
     //Default initial map extent.
-    DefaultExtent: "-9815317.353,5126118.542,-9811259.298,5127735.811",
+    DefaultExtent: "-9816010,5123000,-9809970,5129500",
 
     // Set size of the info-Popup - select maximum height and width in pixels (not applicable for tabbed info-Popup)
     //minimum height should be 270 for the info-popup in pixels
@@ -152,7 +152,7 @@ dojo.declare("js.config", null, {
     },
 
     //Geometry service url
-    GeometryService: "http://203.199.47.146/arcgis/rest/services/Utilities/Geometry/GeometryServer",
+    GeometryService: "http://arcgis-localgov-61933129.us-west-1.elb.amazonaws.com/arcgis/rest/services/Utilities/Geometry/GeometryServer",
 
     // ------------------------------------------------------------------------------------------------------------------------
     // ServiceRequest
@@ -403,15 +403,15 @@ dojo.declare("js.config", null, {
         },
         Locators: [{
             DisplayText: "Address",
-            DefaultValue: "971 Sylvan Cir,Naperville,IL,60540",
+            DefaultValue: "139 W Porter Ave Naperville IL 60540",
             LocatorParamaters: ["SingleLine"],
-            LocatorURL: "http://tasks.arcgisonline.com/ArcGIS/rest/services/Locators/TA_Address_NA_10/GeocodeServer",
+            LocatorURL: "http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer",
             CandidateFields: "Loc_name, Score, Match_addr",
             DisplayField: "${Match_addr}",
             ZoomLevel: 7,
             AddressMatchScore: 80,
             LocatorFieldName: 'Loc_name',
-            LocatorFieldValues: ["US_Streets", "US_StreetName"]
+            LocatorFieldValues: ["USA.StreetName" , "USA.PointAddress", "USA.StreetAddress"]
         }, {
             DisplayText: "Request ID",
             DefaultValue: "152",
