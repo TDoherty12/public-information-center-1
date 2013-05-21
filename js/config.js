@@ -157,9 +157,8 @@ dojo.declare("js.config", null, {
     // ------------------------------------------------------------------------------------------------------------------------
     // ServiceRequest
     // ------------------------------------------------------------------------------------------------------------------------
-    ServiceRequest: {
-        Instructions: "<br/><b>Submit a Request for Service:</b> <br/> <br/>Please search for an address or click directly on the map to locate your request for service. Then, provide details about the request below and click Submit to initiate your request. You'll be provided a Request # that can be used to track the status of your request. If you find a request has already been submitted by another party, you can click on the existing request, provide additional comments and increase the importance of the request.<br /><br/><b>Please note:</b> Attachments can be used to submit a photo, video or other document related to a service request.<br/>",
-        LayerInfo: {
+    ServiceRequest: { Instructions: "<br/><b>Submit a Request for Service:</b> <br/> <br/>Please search for an address or click directly on the map to locate your request for service. Then, provide details about the request below and click Submit to initiate your request. You'll be provided a Request # that can be used to track the status of your request. If you find a request has already been submitted by another party, you can click on the existing request, provide additional comments and increase the importance of the request.<br /><br/><b>Please note:</b> Attachments can be used to submit a photo, video or other document related to a service request.<br/>",
+       LayerInfo: {
             Key: "serviceRequest",
             LayerURL: "http://services.arcgis.com/b6gLrKHqgkQb393u/ArcGIS/rest/services/ServiceRequestTryItLive/FeatureServer/0",
             OutFields: "*",
