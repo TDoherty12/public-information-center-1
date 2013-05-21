@@ -48,7 +48,7 @@ dojo.declare("js.config", null, {
     ApplicationIcon: "images/PubInfoLogo.png",
 
     //Application start splash screen message.
-    SplashScreenMessage: "<b>Welcome to the Public Information Center</b> <br/> <hr/> <br/> The <b>Public Information Center</b> delivers timely and important information about City activities and allows you to interact directly with your local government. <br/> <br/> You can review the status of on-going construction projects, public notices or alerts, main breaks, and out-of-service hydrants; submit requests for service; and finally review social media feeds to see what is being said about your community. <br/> <br /> <b>Contact Us By Phone:</b> <br/> <br/> Naperville Citizen Service Department <br/> Phone: (555) 555-1212 <br/> Open: 8:00 am - 4:00 pm<br/><hr/> <br/>",
+    SplashScreenMessage: "<b>Welcome to the Public Information Center</b> <br/> <hr/> <br/> The <b>Public Information Center</b> delivers timely and important information about City activities and allows you to interact directly with your local government. <br/> <br/> You can review the status of on-going construction projects, public notices or alerts, main breaks, and out-of-service hydrants; submit requests for service; and finally review social media feeds to see what is being said about your community.",
 
     //Path for help file.
     HelpURL: "help.htm",
