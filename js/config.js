@@ -166,7 +166,7 @@ dojo.declare("js.config", null, {
             //Set the attribute for requestID used for creating a new request
             RequestId: "${REQUESTID}",
 
-            CommentsLayerURL: "hhttp://services.arcgis.com/b6gLrKHqgkQb393u/ArcGIS/rest/services/ServiceRequestTryItLive/FeatureServer/1",
+            CommentsLayerURL: "http://services.arcgis.com/b6gLrKHqgkQb393u/ArcGIS/rest/services/ServiceRequestTryItLive/FeatureServer/1",
             CommentsOutFields: "*",
             //Set the primary key attribute for the comments
             CommentId: "${REQUESTID}"
@@ -219,7 +219,7 @@ dojo.declare("js.config", null, {
         LayerInfo: [{
             Key: "capitalProjects",
             DisplayText: "City Construction Projects",
-            LayerURL: "http://arcgis-two-1334003536.us-west-1.elb.amazonaws.com/arcgis/rest/services/InfrastructureAlertsHostSimple/MapServer/6",
+            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/6",
             RippleColor: "#C35617",
             isLayerVisible: true,
             defaultTabOpen: true,
@@ -235,7 +235,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "externalAgencyProjects",
             DisplayText: "Private Utility and Transit Projects",
-            LayerURL: "http://arcgis-two-1334003536.us-west-1.elb.amazonaws.com/arcgis/rest/services/InfrastructureAlertsHostSimple/MapServer/7",
+            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/7",
             RippleColor: "#BCE954",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -251,7 +251,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "infrastructureAlerts",
             DisplayText: "Public Notices and Alerts",
-            LayerURL: "http://arcgis-two-1334003536.us-west-1.elb.amazonaws.com/arcgis/rest/services/InfrastructureAlertsHostSimple/MapServer/5",
+            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/5",
             RippleColor: "#C11B17",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -267,7 +267,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "leaksMainBreaks",
             DisplayText: "Water Main Leaks and Breaks",
-            LayerURL: "http://arcgis-two-1334003536.us-west-1.elb.amazonaws.com/arcgis/rest/services/InfrastructureAlertsHostSimple/MapServer/2",
+            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/2",
             RippleColor: "#C11B17",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -283,7 +283,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "sanitaryBackup",
             DisplayText: "Sewer Backups",
-            LayerURL: "http://arcgis-two-1334003536.us-west-1.elb.amazonaws.com/arcgis/rest/services/InfrastructureAlertsHostSimple/MapServer/3",
+            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/3",
             RippleColor: "#4AA02C",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -299,7 +299,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "sanitaryOverflow",
             DisplayText: "Sewer Overflows",
-            LayerURL: "http://arcgis-two-1334003536.us-west-1.elb.amazonaws.com/arcgis/rest/services/InfrastructureAlertsHostSimple/MapServer/4",
+            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/4",
             RippleColor: "#4AA02C",
             isLayerVisible: false,
             defaultTabOpen: false,
