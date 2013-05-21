@@ -152,7 +152,7 @@ dojo.declare("js.config", null, {
     },
 
     //Geometry service url
-    GeometryService: "http://arcgis-localgov-61933129.us-west-1.elb.amazonaws.com/arcgis/rest/services/Utilities/Geometry/GeometryServer",
+    GeometryService: "http://arcgis-tenone2012-1974758903.us-west-1.elb.amazonaws.com/arcgis/rest/services/Utilities/Geometry/GeometryServer",
 
     // ------------------------------------------------------------------------------------------------------------------------
     // ServiceRequest
