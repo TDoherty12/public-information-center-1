@@ -402,7 +402,7 @@ function MapInitFunction() {
     dojo.addClass("esriLogo", "esriLogo");
     //setting Map slider position
     if (dojo.byId('map_zoom_slider')) {
-        dojo.byId('map_zoom_slider').style.height = '150px';
+        dojo.byId('map_zoom_slider').style.height = '62px';
         dojo.byId('map_zoom_slider').style.top = '175px';
         dojo.byId('map_zoom_slider').style.left = '415px';
     }
