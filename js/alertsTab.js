@@ -52,6 +52,12 @@ function AddAlertLayersOnMap() {
             ShowAlertsInfoWindow(alertLayerInfo[layerIndex].InfoWindowHeader, alertLayerInfo[layerIndex].InfoWindowFields, alertLayerInfo[layerIndex].InfoWindowSize, mapPoint, graphic.attributes, alertLayerInfo[layerIndex].Key);
         });
 
+        dojo.connect(alertLayer, "onLoad", function (addedLayer) {
+            var layer = map.getLayer(addedLayer.id);
+            var layerIndex = GetAlertsIndex(addedLayer.id);
+            AddLegendItem(layer, layerIndex, alertLayerInfo[layerIndex].isLayerVisible, "tableAlertsLegend");
+        });
+
         dojo.connect(alertLayer, "onUpdateEnd", function (features) {
             var layerIndex = GetAlertsIndex(this.id);
 
@@ -69,7 +75,6 @@ function AddAlertLayersOnMap() {
             }
             RemoveChildren(dojo.byId(alertLayerInfo[layerIndex].Key + "Content")); //Removing the existing data
             var layer = map.getLayer(this.id);
-            AddLegendItem(layer, layerIndex, alertLayerInfo[layerIndex].isLayerVisible, "tableAlertsLegend");
             var table = document.createElement("table");
             var tbody = document.createElement("tbody");
             table.style.width = "100%";
@@ -105,7 +110,7 @@ function AddAlertLayersOnMap() {
                     var mapPoint;
                     if (graphic.geometry.type == "point") {
                         mapPoint = graphic.geometry;
-                        map.centerAndZoom(mapPoint, map._slider.maximum - 2);
+                        map.centerAndZoom(mapPoint, map.getMaxZoom() - 2);
                     } else {
                         mapPoint = graphic.geometry.getExtent().getCenter(); //get the center of the polygon
                         if (!graphic.geometry.contains(mapPoint)) { //check center is inside the polygon or take the first point of geometry
