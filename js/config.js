@@ -1,4 +1,5 @@
-﻿/** @license
+﻿/*global dojo */
+/** @license
  | Version 10.2
  | Copyright 2012 Esri
  |
@@ -64,8 +65,7 @@ dojo.declare("js.config", null, {
         Name: "Streets",
         MapURL: "http://arcgis-tenone2012-1974758903.us-west-1.elb.amazonaws.com/ArcGIS/rest/services/ParcelPublicAccess/MapServer"
 
-    },
-     {
+    }, {
         Key: "imageryMap",
         ThumbnailSource: "images/Imagery Hybrid.png",
         Name: "Imagery",
@@ -89,7 +89,7 @@ dojo.declare("js.config", null, {
     // DefaultServiceTab can only be 0, 1 or 2
     //0 = Information, 1=RequestService, 2=SocialMedia
     //Set the value for the tab enabled on load
-    DefaultServiceTab:0,
+    DefaultServiceTab: 0,
 
     //Set the value for the tab to be removed on load as false
     VisibleTab: {
@@ -102,7 +102,8 @@ dojo.declare("js.config", null, {
     TabHeaderText: [
         "Information",
         "Request Service",
-        "Social Media"],
+        "Social Media"
+    ],
 
     //Set the attribute for displaying status of serviceRequest
     Status: "${STATUS}",
@@ -157,8 +158,9 @@ dojo.declare("js.config", null, {
     // ------------------------------------------------------------------------------------------------------------------------
     // ServiceRequest
     // ------------------------------------------------------------------------------------------------------------------------
-    ServiceRequest: { Instructions: "<br/><b>Submit a Request for Service:</b> <br/> <br/>Please search for an address or click directly on the map to locate your request for service. Then, provide details about the request below and click Submit to initiate your request. You'll be provided a Request # that can be used to track the status of your request. If you find a request has already been submitted by another party, you can click on the existing request, provide additional comments and increase the importance of the request.<br /><br/><b>Please note:</b> Attachments can be used to submit a photo, video or other document related to a service request.<br/>",
-       LayerInfo: {
+    ServiceRequest: {
+        Instructions: "<br/><b>Submit a Request for Service:</b> <br/> <br/>Please search for an address or click directly on the map to locate your request for service. Then, provide details about the request below and click Submit to initiate your request. You'll be provided a Request # that can be used to track the status of your request. If you find a request has already been submitted by another party, you can click on the existing request, provide additional comments and increase the importance of the request.<br /><br/><b>Please note:</b> Attachments can be used to submit a photo, video or other document related to a service request.<br/>",
+        LayerInfo: {
             Key: "serviceRequest",
             LayerURL: "http://services.arcgis.com/b6gLrKHqgkQb393u/ArcGIS/rest/services/ServiceRequestTryItLive/FeatureServer/0",
             OutFields: "*",
@@ -410,7 +412,7 @@ dojo.declare("js.config", null, {
             ZoomLevel: 7,
             AddressMatchScore: 80,
             LocatorFieldName: 'Loc_name',
-            LocatorFieldValues: ["USA.StreetName" , "USA.PointAddress", "USA.StreetAddress"]
+            LocatorFieldValues: ["USA.StreetName", "USA.PointAddress", "USA.StreetAddress"]
         }, {
             DisplayText: "Request ID",
             DefaultValue: "152",
