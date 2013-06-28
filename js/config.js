@@ -63,13 +63,13 @@ dojo.declare("js.config", null, {
         Key: "streetMap",
         ThumbnailSource: "images/Parcel map.png",
         Name: "Streets",
-        MapURL: "http://arcgis-tenone2012-1974758903.us-west-1.elb.amazonaws.com/ArcGIS/rest/services/ParcelPublicAccess/MapServer"
+        MapURL: "http://tryitlive.arcgis.com/arcgis/rest/services/GeneralPurpose/MapServer"
 
     }, {
         Key: "imageryMap",
         ThumbnailSource: "images/Imagery Hybrid.png",
         Name: "Imagery",
-        MapURL: "http://arcgis-tenone2012-1974758903.us-west-1.elb.amazonaws.com/ArcGIS/rest/services/ImageryHybrid/MapServer"
+        MapURL: "http://tryitlive.arcgis.com/ArcGIS/rest/services/ImageryHybrid/MapServer"
     }],
 
     //Default initial map extent.
@@ -153,7 +153,7 @@ dojo.declare("js.config", null, {
     },
 
     //Geometry service url
-    GeometryService: "http://arcgis-tenone2012-1974758903.us-west-1.elb.amazonaws.com/arcgis/rest/services/Utilities/Geometry/GeometryServer",
+    GeometryService: "http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer",
 
     // ------------------------------------------------------------------------------------------------------------------------
     // ServiceRequest
@@ -221,7 +221,7 @@ dojo.declare("js.config", null, {
         LayerInfo: [{
             Key: "capitalProjects",
             DisplayText: "City Construction Projects",
-            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/6",
+            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/6",
             RippleColor: "#C35617",
             isLayerVisible: true,
             defaultTabOpen: true,
@@ -237,7 +237,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "externalAgencyProjects",
             DisplayText: "Private Utility and Transit Projects",
-            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/7",
+            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/7",
             RippleColor: "#BCE954",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -253,7 +253,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "infrastructureAlerts",
             DisplayText: "Public Notices and Alerts",
-            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/5",
+            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/5",
             RippleColor: "#C11B17",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -269,7 +269,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "leaksMainBreaks",
             DisplayText: "Water Main Leaks and Breaks",
-            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/2",
+            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/2",
             RippleColor: "#C11B17",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -285,7 +285,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "sanitaryBackup",
             DisplayText: "Sewer Backups",
-            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/3",
+            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/3",
             RippleColor: "#4AA02C",
             isLayerVisible: false,
             defaultTabOpen: false,
@@ -301,7 +301,7 @@ dojo.declare("js.config", null, {
         }, {
             Key: "sanitaryOverflow",
             DisplayText: "Sewer Overflows",
-            LayerURL: "http://ec2-54-214-140-9.us-west-2.compute.amazonaws.com:6080/arcgis/rest/services/InfrastructureAlerts/MapServer/4",
+            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/4",
             RippleColor: "#4AA02C",
             isLayerVisible: false,
             defaultTabOpen: false,
