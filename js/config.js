@@ -43,13 +43,13 @@ dojo.declare("js.config", null, {
     // GENERAL SETTINGS
     // ------------------------------------------------------------------------------------------------------------------------
     //Application name to be displayed in the application header.
-    ApplicationName: "<b>Public Information Center</b>",
+    ApplicationName: "<b>Charlotte County Public Works Information Center</b>",
 
     //Application icon to be displayed in the application header.
     ApplicationIcon: "images/PubInfoLogo.png",
 
     //Application start splash screen message.
-    SplashScreenMessage: "<b>Welcome to the Public Information Center</b> <br/> <hr/> <br/> The <b>Public Information Center</b> delivers timely and important information about City activities and allows you to interact directly with your local government. <br/> <br/> You can review the status of on-going construction projects, public notices or alerts, main breaks, and out-of-service hydrants; submit requests for service; and finally review social media feeds to see what is being said about your community.",
+    SplashScreenMessage: "<b>Welcome to Charlotte County Public Works Information Center</b> <br/> <hr/> <br/> The <b>Public Information Center</b> delivers timely and important information about City activities and allows you to interact directly with your local government. <br/> <br/> You can review the status of on-going construction projects, public notices or alerts, main breaks, and out-of-service hydrants; submit requests for service; and finally review social media feeds to see what is being said about your community.",
 
     //Path for help file.
     HelpURL: "help.htm",
@@ -60,10 +60,10 @@ dojo.declare("js.config", null, {
     // Set baseMap layers
     //Basemap layers:Basemap layer collection. (All the basemap’s need to be in the same spatial reference)
     BaseMapLayers: [{
-        Key: "streetMap",
-        ThumbnailSource: "images/Parcel map.png",
-        Name: "Streets",
-        MapURL: "http://tryitlive.arcgis.com/arcgis/rest/services/GeneralPurpose/MapServer"
+        Key: "Map Service",
+        ThumbnailSource: "thumbnail/{392391B1-0658-43BC-B12E-2B5973153410}.png",
+        Name: "CCGIS_Basemap",
+        MapURL: "http://arc-gis-1.charco.gov:6080/arcgis/services/Basemaps/CCGIS_Basemap/MapServer"
 
     }, {
         Key: "imageryMap",
@@ -219,34 +219,34 @@ dojo.declare("js.config", null, {
     Alerts: {
         Instructions: "<br/><b>General Information:</b> <br/> <br/>The location of construction projects, public notices or alerts, out of service hydrants, and main breaks can be found below.  You can turn on and off projects and assets in the left navigation pane.  When you find a project or asset you're interested in, select it from the list and it will be highlighted on the map.  If you click on an individual asset or project on the map, additional detail will be provided.",
         LayerInfo: [{
-            Key: "capitalProjects",
-            DisplayText: "City Construction Projects",
-            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/6",
+            Key: "construction Projects",
+            DisplayText: "Engineering Projects Under Construction",
+            LayerURL: "http://agis.charlottecountyfl.gov/arcgis/rest/services/Essentials/CCGISLayers/MapServer/31",
             RippleColor: "#C35617",
             isLayerVisible: true,
             defaultTabOpen: true,
             OutFields: "*",
-            DateFields: "PLANSTART,PLANEND",
-            ListViewFormat: "<b>Project Name:</b> ${WORKID}<br/><b>Location:</b> ${LOCATION}<br/><b>Planned Start Date:</b> ${PLANSTART}",
-            InfoWindowHeader: "${WORKID}",
+            DateFields: "",
+            ListViewFormat: "<b>Project Name:</b> ${Project_Na}<br/><b>Project Type:</b> ${Project_ty}<br/>",
+            InfoWindowHeader: "Under Construction",
             InfoWindowSize: "330,310",
-            InfoWindowFields: "Location:${LOCATION},Project Status:${WORKSTATUS},Planned Start Date:${PLANSTART},Planned End Date:${PLANEND},Responsible Agency:${ASSIGNEDTO},Supervisor:${SUPERVISOR}",
+            InfoWindowFields: "Project Name; ${Project_Na},Project Type:${Project_Ty},Bid Specs:${Bid_Specs},Budget:${Budget}",
             hasDefinitionExpression: false,
             DefinitionExpression: "",
             FilterDays: 0
         }, {
-            Key: "externalAgencyProjects",
-            DisplayText: "Private Utility and Transit Projects",
-            LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/7",
+            Key: "In Design Projects",
+            DisplayText: "Engineering Projects In Design",
+            LayerURL: "http://agis.charlottecountyfl.gov/arcgis/rest/services/Essentials/CCGISLayers/MapServer/31",
             RippleColor: "#BCE954",
             isLayerVisible: false,
             defaultTabOpen: false,
             OutFields: "*",
-            DateFields: "STARTDATE,ENDDATE",
-            ListViewFormat: "<b>Project Name:</b> ${PROJNAME}<br/><b>Planned Start Date:</b> ${STARTDATE}",
-            InfoWindowHeader: "${PROJNAME}",
+            DateFields: "",
+            ListViewFormat: "<b>Project Name:</b> ${Project_Na}<br/><b>Project Type:</b> ${Project_ty}<br/>",
+            InfoWindowHeader: "IN Design",
             InfoWindowSize: "330,310",
-            InfoWindowFields: "Planned Start Date:${STARTDATE},Planned End Date:${ENDDATE},Responsible Agency:${AGENCY},Contact:${CONTACTNAME},Phone:${PHONE},Email:${EMAIL}",
+            InfoWindowFields: "Project Name; ${Project_Na},Project Type:${Project_Ty},Bid Specs:${Bid_Specs},Budget:${Budget},Contact:${CONTACTNAME},Phone:${PHONE},Email:${EMAIL}",
             hasDefinitionExpression: false,
             DefinitionExpression: "",
             FilterDays: 712
@@ -267,8 +267,8 @@ dojo.declare("js.config", null, {
             DefinitionExpression: "",
             FilterDays: 0
         }, {
-            Key: "leaksMainBreaks",
-            DisplayText: "Water Main Leaks and Breaks",
+            Key: "Maintenance",
+            DisplayText: "Maintenance and Operations Projects",
             LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/2",
             RippleColor: "#C11B17",
             isLayerVisible: false,
@@ -283,8 +283,8 @@ dojo.declare("js.config", null, {
             DefinitionExpression: "REPSTATUS = 'In Progress'",
             FilterDays: null
         }, {
-            Key: "sanitaryBackup",
-            DisplayText: "Sewer Backups",
+            Key: "Pest Management",
+            DisplayText: "Pest Management Services",
             LayerURL: "http://tryitlive.arcgis.com/arcgis/rest/services/InfrastructureAlerts/MapServer/3",
             RippleColor: "#4AA02C",
             isLayerVisible: false,
@@ -404,7 +404,7 @@ dojo.declare("js.config", null, {
         },
         Locators: [{
             DisplayText: "Address",
-            DefaultValue: "139 W Porter Ave Naperville IL 60540",
+            DefaultValue: ,
             LocatorParamaters: ["SingleLine"],
             LocatorURL: "http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer",
             CandidateFields: "Loc_name, Score, Match_addr",
